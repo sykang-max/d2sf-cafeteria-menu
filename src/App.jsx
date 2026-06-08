@@ -1,0 +1,18 @@
+import React, { useState } from "react";
+import Header from "./components/Header.jsx";
+import WeeklyLunchMenu from "./components/WeeklyLunchMenu.jsx";
+import { weeks } from "./data/index.js";
+
+export default function App() {
+  const [weekId, setWeekId] = useState(weeks[0].id);
+  const week = weeks.find((w) => w.id === weekId) ?? weeks[0];
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Header weeks={weeks} weekId={weekId} onWeekChange={setWeekId} />
+      <main>
+        <WeeklyLunchMenu week={week} />
+      </main>
+    </div>
+  );
+}

@@ -1,0 +1,13 @@
+// 주차 레지스트리 — 화면 상단의 주차 선택 드롭다운이 이 배열을 그대로 사용합니다.
+//
+// ▶ 다음 주 식단 추가하기
+//   1) src/data/menu-2026-w2.js 를 복사해 menu-2026-w3.js 등으로 만들고 데이터를 채웁니다.
+//   2) 아래에 import 하고 weeks 배열 "맨 앞"에 넣습니다. (최신 주차가 기본 선택됨)
+//
+//   import { week as w2026w3 } from "./menu-2026-w3.js";
+//   export const weeks = [w2026w3, w2026w2];
+
+import { week as w2026w2 } from "./menu-2026-w2.js";
+
+// 최신 주차를 배열 맨 앞에 두세요. weeks[0] 이 기본 선택됩니다.
+export const weeks = [w2026w2];

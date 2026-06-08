@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+
+# 에디터 / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+
+# 작업용 산출물
+temporary screenshots/
