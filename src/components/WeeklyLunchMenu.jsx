@@ -109,9 +109,10 @@ export default function WeeklyLunchMenu({ week }) {
     [STATIC_TAKEOUT, cuisine, q]
   );
 
-  // 요일별 화면에서 해당 요일 섹션으로 부드럽게 점프
-  const jumpTo = (d) => {
-    const el = document.getElementById(`day-${d}`);
+  // 섹션으로 부드럽게 점프 (요일별·코너별 공용). 코너명에 공백이 있어 id용으로 치환.
+  const slug = (s) => s.replace(/\s+/g, "-");
+  const jumpTo = (id) => {
+    const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -257,7 +258,7 @@ export default function WeeklyLunchMenu({ week }) {
               {DAYS.filter(([d]) => visible.some((s) => s.day === d)).map(([d, date]) => (
                 <button
                   key={d}
-                  onClick={() => jumpTo(d)}
+                  onClick={() => jumpTo(`day-${d}`)}
                   className="inline-flex items-baseline gap-1 rounded-full border border-stone-200 bg-white px-3 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green"
                 >
                   {d}
@@ -287,11 +288,23 @@ export default function WeeklyLunchMenu({ week }) {
           </div>
         ) : (
           <div className="mt-5 space-y-5">
+            {/* 코너 바로가기 (sticky) */}
+            <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-1.5 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur">
+              {corners.filter((cn) => visible.some((s) => s.corner === cn)).map((cn) => (
+                <button
+                  key={cn}
+                  onClick={() => jumpTo(`corner-${slug(cn)}`)}
+                  className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green"
+                >
+                  {cn}
+                </button>
+              ))}
+            </div>
             {corners.map((cn) => {
               const sets = visible.filter((s) => s.corner === cn);
               if (sets.length === 0) return null;
               return (
-                <div key={cn}>
+                <div key={cn} id={`corner-${slug(cn)}`} className="scroll-mt-16">
                   <h3 className="mb-2 text-[17px] font-extrabold text-stone-900">{cn}</h3>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sets.map((s, i) => (
