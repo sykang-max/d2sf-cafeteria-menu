@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import Header from "./components/Header.jsx";
 import WeeklyLunchMenu from "./components/WeeklyLunchMenu.jsx";
 import { weeks } from "./data/index.js";
@@ -13,6 +14,7 @@ export default function App() {
       <main>
         <WeeklyLunchMenu week={week} />
       </main>
+      <Analytics />
     </div>
   );
 }
