@@ -120,13 +120,13 @@ export default function WeeklyLunchMenu({ week }) {
     showKcal && meal !== "테이크아웃" && a ? (
       <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
         <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 font-bold text-stone-600">
-          <Flame size={12} style={{ color: BRAND.green }} /> 평균 <b className="font-mono" style={{ color: BRAND.greenDark }}>{a.avg}</b>
+          <Flame size={12} style={{ color: BRAND.green }} /> 평균 <b className="font-mono" style={{ color: BRAND.greenDark }}>{a.avg}<span className="text-[9px] font-normal">kcal</span></b>
         </span>
         <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
-          <Feather size={12} /> 가볍게 · {a.light.corner} <b className="font-mono">{a.light.kcal}</b>
+          <Feather size={12} /> 가볍게 · {a.light.corner} <b className="font-mono">{a.light.kcal}<span className="text-[9px] font-normal">kcal</span></b>
         </span>
         <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold" style={{ backgroundColor: BRAND.yellowSoft, color: BRAND.yellowText }}>
-          <Beef size={12} /> 든든하게 · {a.heavy.corner} <b className="font-mono">{a.heavy.kcal}</b>
+          <Beef size={12} /> 든든하게 · {a.heavy.corner} <b className="font-mono">{a.heavy.kcal}<span className="text-[9px] font-normal">kcal</span></b>
         </span>
       </div>
     ) : null;
