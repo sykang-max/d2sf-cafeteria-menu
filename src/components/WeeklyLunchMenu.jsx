@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, X, CalendarDays, LayoutList, Flame, Info, UtensilsCrossed, Feather, Beef } from "lucide-react";
+import { Search, X, CalendarDays, CalendarCheck, LayoutList, Flame, Info, UtensilsCrossed, Feather, Beef } from "lucide-react";
 import { CUISINE, TAG, MEALS, BRAND } from "../theme.js";
 
 /**
@@ -58,10 +58,16 @@ function SetCard({ s, showKcal }) {
 export default function WeeklyLunchMenu({ week }) {
   const { days: DAYS, sets: SETS, staticTakeout: STATIC_TAKEOUT, range } = week;
 
+  // 오늘 요일(브라우저 기준)을 주차 데이터의 요일 키와 매칭
+  const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
+  const todayKey = WEEKDAY[new Date().getDay()];
+  const todayEntry = DAYS.find(([d]) => d === todayKey);
+  const todayInWeek = Boolean(todayEntry);
+
   const [meal, setMeal] = useState("중식");
   const [q, setQ] = useState("");
   const [cuisine, setCuisine] = useState("전체");
-  const [view, setView] = useState("day");
+  const [view, setView] = useState("today"); // 랜딩 기본 화면: 오늘의 메뉴
   const [showKcal, setShowKcal] = useState(true);
 
   // 주차가 바뀌면 필터를 초기화 (선택한 코너/검색어가 새 주차에 없을 수 있으므로)
@@ -85,25 +91,45 @@ export default function WeeklyLunchMenu({ week }) {
   );
 
   const corners = [...new Set(SETS.filter((s) => s.meal === meal).map((s) => s.corner))];
+  const todaySets = visible.filter((s) => s.day === todayKey);
 
-  const analysis = useMemo(() => {
-    const main = visible.filter((s) => !s.side);
-    const byDay = DAYS.map(([d]) => {
-      const ds = main.filter((s) => s.day === d).map((s) => ({ corner: s.corner, kcal: sum(s.items) }));
-      if (ds.length === 0) return null;
-      const light = ds.reduce((a, b) => (b.kcal < a.kcal ? b : a));
-      const heavy = ds.reduce((a, b) => (b.kcal > a.kcal ? b : a));
-      return { day: d, light, heavy };
-    }).filter(Boolean);
-    const all = main.map((s) => sum(s.items));
-    const avg = all.length ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : 0;
-    return { byDay, avg };
-  }, [DAYS, visible]);
+  // 특정 요일 하루치 칼로리 분석 (요일 헤더용) — 가장 가벼운/든든한 코너 + 평균
+  const dayAnalysis = (d) => {
+    const main = visible.filter((s) => !s.side && s.day === d);
+    if (main.length === 0) return null;
+    const ds = main.map((s) => ({ corner: s.corner, kcal: sum(s.items) }));
+    const light = ds.reduce((a, b) => (b.kcal < a.kcal ? b : a));
+    const heavy = ds.reduce((a, b) => (b.kcal > a.kcal ? b : a));
+    const avg = Math.round(ds.reduce((a, b) => a + b.kcal, 0) / ds.length);
+    return { light, heavy, avg };
+  };
 
   const staticVisible = useMemo(
     () => STATIC_TAKEOUT.filter(([n, c]) => (cuisine === "전체" || c === cuisine) && (!q || n.toLowerCase().includes(q.toLowerCase()))),
     [STATIC_TAKEOUT, cuisine, q]
   );
+
+  // 요일별 화면에서 해당 요일 섹션으로 부드럽게 점프
+  const jumpTo = (d) => {
+    const el = document.getElementById(`day-${d}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // 요일 헤더에 인라인으로 들어가는 하루치 분석 칩 (kcal 켜짐 & 테이크아웃 아님 & 데이터 존재 시)
+  const renderAnalysis = (a) =>
+    showKcal && meal !== "테이크아웃" && a ? (
+      <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
+        <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 font-bold text-stone-600">
+          <Flame size={12} style={{ color: BRAND.green }} /> 평균 <b className="font-mono" style={{ color: BRAND.greenDark }}>{a.avg}</b>
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
+          <Feather size={12} /> 가볍게 · {a.light.corner} <b className="font-mono">{a.light.kcal}</b>
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold" style={{ backgroundColor: BRAND.yellowSoft, color: BRAND.yellowText }}>
+          <Beef size={12} /> 든든하게 · {a.heavy.corner} <b className="font-mono">{a.heavy.kcal}</b>
+        </span>
+      </div>
+    ) : null;
 
   return (
     <div className="w-full bg-white" style={{ fontFamily: "'Pretendard Variable', Pretendard, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif", color: BRAND.charcoal }}>
@@ -169,6 +195,10 @@ export default function WeeklyLunchMenu({ week }) {
             </div>
             <div className="flex items-center gap-1.5">
               <div className="flex rounded-lg border border-stone-200 bg-white p-0.5">
+                <button onClick={() => setView("today")} className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors" style={view === "today" ? { backgroundColor: BRAND.green, color: "#fff" } : { color: "#78716c" }}>
+                  <CalendarCheck size={13} />
+                  오늘
+                </button>
                 <button onClick={() => setView("day")} className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors" style={view === "day" ? { backgroundColor: BRAND.green, color: "#fff" } : { color: "#78716c" }}>
                   <CalendarDays size={13} />
                   요일별
@@ -191,16 +221,61 @@ export default function WeeklyLunchMenu({ week }) {
 
         {visible.length === 0 && staticVisible.length === 0 ? (
           <p className="mt-12 text-center text-[14px] text-stone-400">😢 조건에 맞는 메뉴가 없어요.</p>
+        ) : view === "today" ? (
+          <div className="mt-5">
+            {!todayInWeek ? (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50/60 p-8 text-center" style={{ boxShadow: CARD_SHADOW }}>
+                <p className="text-[15px] font-bold text-stone-700">오늘({todayKey}요일)은 식단 운영일이 아니에요 🌿</p>
+                <p className="mt-1 text-[13px] text-stone-400">평일(월~금) 식단은 '요일별' 탭에서 확인하세요.</p>
+                <button onClick={() => setView("day")} className="mt-4 rounded-xl px-4 py-2 text-[13px] font-bold text-white transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ backgroundColor: BRAND.green, outlineColor: BRAND.green }}>
+                  요일별 보기
+                </button>
+              </div>
+            ) : todaySets.length === 0 ? (
+              <p className="mt-12 text-center text-[14px] text-stone-400">😢 오늘 조건에 맞는 메뉴가 없어요.</p>
+            ) : (
+              <div>
+                <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <h3 className="flex items-center gap-2 text-[18px] font-extrabold text-stone-900">
+                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-extrabold text-white" style={{ backgroundColor: BRAND.green }}>오늘</span>
+                    {todayKey}요일 <span className="text-[12px] font-normal text-stone-400">{todayEntry?.[1]}</span>
+                  </h3>
+                  {renderAnalysis(dayAnalysis(todayKey))}
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {todaySets.map((s, i) => (
+                    <SetCard key={i} s={s} showKcal={showKcal} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         ) : view === "day" ? (
           <div className="mt-5 space-y-5">
+            {/* 요일 바로가기 (sticky) */}
+            <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-1.5 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur">
+              {DAYS.filter(([d]) => visible.some((s) => s.day === d)).map(([d, date]) => (
+                <button
+                  key={d}
+                  onClick={() => jumpTo(d)}
+                  className="inline-flex items-baseline gap-1 rounded-full border border-stone-200 bg-white px-3 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green"
+                >
+                  {d}
+                  <span className="text-[10px] font-normal text-stone-400">{date}</span>
+                </button>
+              ))}
+            </div>
             {DAYS.map(([d, date]) => {
               const sets = visible.filter((s) => s.day === d);
               if (sets.length === 0) return null;
               return (
-                <div key={d}>
-                  <h3 className="mb-2 flex items-baseline gap-2 text-[17px] font-extrabold text-stone-900">
-                    {d}요일 <span className="text-[12px] font-normal text-stone-400">{date}</span>
-                  </h3>
+                <div key={d} id={`day-${d}`} className="scroll-mt-16">
+                  <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <h3 className="flex items-baseline gap-2 text-[17px] font-extrabold text-stone-900">
+                      {d}요일 <span className="text-[12px] font-normal text-stone-400">{date}</span>
+                    </h3>
+                    {renderAnalysis(dayAnalysis(d))}
+                  </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sets.map((s, i) => (
                       <SetCard key={i} s={s} showKcal={showKcal} />
@@ -245,37 +320,6 @@ export default function WeeklyLunchMenu({ week }) {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {showKcal && meal !== "테이크아웃" && analysis.byDay.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-5" style={{ boxShadow: CARD_SHADOW }}>
-            <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-1.5 text-[15px] font-extrabold text-stone-900">
-                <Flame size={16} style={{ color: BRAND.green }} /> {meal} 칼로리 분석
-              </h3>
-              <span className="text-[12px] text-stone-500">
-                코너 평균{" "}
-                <strong className="font-mono" style={{ color: BRAND.greenDark }}>
-                  {analysis.avg} kcal
-                </strong>
-              </span>
-            </div>
-            <p className="mt-1 text-[11.5px] text-stone-400">요일별 가장 가벼운 / 든든한 코너 (사이드·추가배식 제외)</p>
-            <div className="mt-3 space-y-2">
-              {analysis.byDay.map(({ day, light, heavy }) => (
-                <div key={day} className="flex flex-wrap items-center gap-2 text-[12.5px]">
-                  <span className="w-7 shrink-0 font-bold text-stone-500">{day}</span>
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
-                    <Feather size={12} /> 가볍게 · {light.corner} <b className="font-mono">{light.kcal}</b>
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold" style={{ backgroundColor: BRAND.yellowSoft, color: BRAND.yellowText }}>
-                    <Beef size={12} /> 든든하게 · {heavy.corner} <b className="font-mono">{heavy.kcal}</b>
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-stone-400">※ 점심 한 끼 적정선 600–800 kcal. 수치는 1인분 추정치이며 실제 제공량과 다를 수 있습니다.</p>
           </div>
         )}
 
