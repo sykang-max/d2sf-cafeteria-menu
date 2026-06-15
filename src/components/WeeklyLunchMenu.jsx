@@ -104,7 +104,17 @@ export default function WeeklyLunchMenu({ week }) {
     [SETS, meal, cuisine, q]
   );
 
-  const corners = [...new Set(SETS.filter((s) => s.meal === meal).map((s) => s.corner))];
+  // 코너 순서: 데이터 등장 순서를 따르되, 스낵 코너는 '추가배식대' 바로 앞으로 이동.
+  const corners = (() => {
+    const arr = [...new Set(SETS.filter((s) => s.meal === meal).map((s) => s.corner))];
+    const snackIdx = arr.findIndex((c) => /snack|스낵/i.test(c));
+    if (snackIdx === -1) return arr;
+    const [snack] = arr.splice(snackIdx, 1);
+    const extraIdx = arr.findIndex((c) => c === "추가배식대");
+    if (extraIdx === -1) arr.push(snack); // 추가배식대가 없으면 맨 뒤로
+    else arr.splice(extraIdx, 0, snack); // 추가배식대 바로 앞에 삽입
+    return arr;
+  })();
   const todaySets = visible.filter((s) => s.day === todayKey);
 
   // 특정 요일 하루치 칼로리 분석 (요일 헤더용) — 가장 가벼운/든든한 코너 + 평균
@@ -303,12 +313,12 @@ export default function WeeklyLunchMenu({ week }) {
         ) : (
           <div className="mt-5 space-y-5">
             {/* 코너 바로가기 (sticky) */}
-            <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-1.5 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur">
+            <div className="sticky top-0 z-20 -mx-1 grid grid-cols-3 items-center gap-1 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur sm:flex sm:flex-wrap sm:gap-1.5">
               {corners.filter((cn) => visible.some((s) => s.corner === cn)).map((cn) => (
                 <button
                   key={cn}
                   onClick={() => jumpTo(`corner-${slug(cn)}`)}
-                  className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green"
+                  className="inline-flex items-center justify-center truncate rounded-full border border-stone-200 bg-white px-2 py-1 text-[12px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green sm:justify-start sm:px-3 sm:text-[13px]"
                 >
                   {cn}
                 </button>
