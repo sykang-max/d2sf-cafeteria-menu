@@ -268,12 +268,12 @@ export default function WeeklyLunchMenu({ week }) {
         ) : view === "day" ? (
           <div className="mt-5 space-y-5">
             {/* 요일 바로가기 (sticky) */}
-            <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-1.5 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur">
+            <div className="sticky top-0 z-20 -mx-1 flex flex-nowrap items-center gap-1 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur sm:flex-wrap sm:gap-1.5">
               {DAYS.filter(([d]) => visible.some((s) => s.day === d)).map(([d, date]) => (
                 <button
                   key={d}
                   onClick={() => jumpTo(`day-${d}`)}
-                  className="inline-flex items-baseline gap-1 rounded-full border border-stone-200 bg-white px-3 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green"
+                  className="inline-flex min-w-0 flex-1 items-baseline justify-center gap-1 whitespace-nowrap rounded-full border border-stone-200 bg-white px-2 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green sm:flex-none sm:justify-start sm:px-3"
                 >
                   {d}
                   <span className="text-[10px] font-normal text-stone-400">{date}</span>
