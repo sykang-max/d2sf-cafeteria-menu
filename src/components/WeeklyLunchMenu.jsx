@@ -9,7 +9,6 @@ import { CUISINE, TAG, MEALS, BRAND } from "../theme.js";
  */
 
 const sum = (items) => items.reduce((s, [, k]) => s + k, 0);
-const CUISINES = ["전체", ...Object.keys(CUISINE)];
 
 // 현재 시각(브라우저 로컬 기준)에 해당하는 끼니를 추정합니다.
 //   ~10:30 조식 · 10:30~14:30 중식 · 그 이후 석식
@@ -80,28 +79,25 @@ export default function WeeklyLunchMenu({ week }) {
     return SETS.some((s) => s.meal === guess) ? guess : "중식";
   });
   const [q, setQ] = useState("");
-  const [cuisine, setCuisine] = useState("전체");
   const [view, setView] = useState("today"); // 랜딩 기본 화면: 오늘의 메뉴
   const [showKcal, setShowKcal] = useState(true);
 
-  // 주차가 바뀌면 필터를 초기화 (선택한 코너/검색어가 새 주차에 없을 수 있으므로)
+  // 주차가 바뀌면 검색어를 초기화 (선택한 메뉴가 새 주차에 없을 수 있으므로)
   useEffect(() => {
     setQ("");
-    setCuisine("전체");
   }, [week.id]);
 
   const visible = useMemo(
     () =>
       SETS.filter((s) => {
         if (s.meal !== meal) return false;
-        if (cuisine !== "전체" && s.cuisine !== cuisine) return false;
         if (q) {
           const hay = (s.corner + " " + s.items.map(([n]) => n).join(" ")).toLowerCase();
           if (!hay.includes(q.toLowerCase())) return false;
         }
         return true;
       }),
-    [SETS, meal, cuisine, q]
+    [SETS, meal, q]
   );
 
   // 코너 순서: 데이터 등장 순서를 따르되, 스낵 코너는 '추가배식대' 바로 앞으로 이동.
@@ -129,8 +125,8 @@ export default function WeeklyLunchMenu({ week }) {
   };
 
   const staticVisible = useMemo(
-    () => STATIC_TAKEOUT.filter(([n, c]) => (cuisine === "전체" || c === cuisine) && (!q || n.toLowerCase().includes(q.toLowerCase()))),
-    [STATIC_TAKEOUT, cuisine, q]
+    () => STATIC_TAKEOUT.filter(([n]) => !q || n.toLowerCase().includes(q.toLowerCase())),
+    [STATIC_TAKEOUT, q]
   );
 
   // 섹션으로 부드럽게 점프 (요일별·코너별 공용). 코너명에 공백이 있어 id용으로 치환.
@@ -173,10 +169,7 @@ export default function WeeklyLunchMenu({ week }) {
             return (
               <button
                 key={mlabel}
-                onClick={() => {
-                  setMeal(mlabel);
-                  setCuisine("전체");
-                }}
+                onClick={() => setMeal(mlabel)}
                 className="rounded-xl px-4 py-2 text-[14px] font-bold transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={active ? { backgroundColor: BRAND.green, color: "#fff", boxShadow: "0 4px 12px -2px rgba(0,140,21,0.35)", outlineColor: BRAND.green } : { backgroundColor: "#F4F4F3", color: "#78716c", outlineColor: BRAND.green }}
               >
@@ -201,46 +194,31 @@ export default function WeeklyLunchMenu({ week }) {
               </button>
             )}
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-1.5">
-              {CUISINES.map((c) => {
-                const active = cuisine === c;
-                const activeColor = c === "전체" ? BRAND.green : CUISINE[c];
-                return (
-                  <button
-                    key={c}
-                    onClick={() => setCuisine(c)}
-                    className="rounded-full border px-3 py-1 text-[13px] font-semibold transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
-                    style={active ? { backgroundColor: activeColor, borderColor: "transparent", color: "#fff", outlineColor: activeColor } : { backgroundColor: "#fff", borderColor: "#e7e5e4", color: "#78716c", outlineColor: BRAND.green }}
-                  >
-                    {c}
-                  </button>
-                );
-              })}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 rounded-lg border border-stone-200 bg-white p-0.5">
+              {[
+                { id: "today", label: "오늘", Icon: CalendarCheck },
+                { id: "day", label: "요일별", Icon: CalendarDays },
+                { id: "corner", label: "코너별", Icon: LayoutList },
+              ].map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setView(id)}
+                  className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 py-1.5 text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+                  style={view === id ? { backgroundColor: BRAND.green, color: "#fff", outlineColor: BRAND.green } : { color: "#78716c", outlineColor: BRAND.green }}
+                >
+                  <Icon size={13} className="shrink-0" />
+                  {label}
+                </button>
+              ))}
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex rounded-lg border border-stone-200 bg-white p-0.5">
-                <button onClick={() => setView("today")} className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors" style={view === "today" ? { backgroundColor: BRAND.green, color: "#fff" } : { color: "#78716c" }}>
-                  <CalendarCheck size={13} />
-                  오늘
-                </button>
-                <button onClick={() => setView("day")} className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors" style={view === "day" ? { backgroundColor: BRAND.green, color: "#fff" } : { color: "#78716c" }}>
-                  <CalendarDays size={13} />
-                  요일별
-                </button>
-                <button onClick={() => setView("corner")} className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors" style={view === "corner" ? { backgroundColor: BRAND.green, color: "#fff" } : { color: "#78716c" }}>
-                  <LayoutList size={13} />
-                  코너별
-                </button>
-              </div>
-              <button
-                onClick={() => setShowKcal((x) => !x)}
-                className="flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold transition-colors"
-                style={showKcal ? { borderColor: BRAND.green, backgroundColor: BRAND.greenSoft, color: BRAND.greenDark } : { borderColor: "#e7e5e4", backgroundColor: "#fff", color: "#a8a29e" }}
-              >
-                <Flame size={13} /> kcal
-              </button>
-            </div>
+            <button
+              onClick={() => setShowKcal((x) => !x)}
+              className="flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+              style={showKcal ? { borderColor: BRAND.green, backgroundColor: BRAND.greenSoft, color: BRAND.greenDark, outlineColor: BRAND.green } : { borderColor: "#e7e5e4", backgroundColor: "#fff", color: "#a8a29e", outlineColor: BRAND.green }}
+            >
+              <Flame size={13} /> kcal
+            </button>
           </div>
         </div>
 
