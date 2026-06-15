@@ -8,8 +8,11 @@ const MESSAGES = [
   "💪 이번 주도 힘내세요!",
   "😊 행복한 한 주 보내세요!",
   "🌞 활기찬 한 주 되세요!",
-  "🍀 행운 가득한 한 주 되시길!",
+  "🍀 행운 가득한 한 주 되세요!",
 ];
+
+// 순환 시작 기준 주차 — 이 주차에 MESSAGES[0]이 표시되고 이후 순서대로 순환
+const BASE_WEEK = 25;
 
 // 연중 주 번호 계산 (원본 스니펫 로직 유지)
 function getWeekNumber(date) {
@@ -28,7 +31,8 @@ export default function WelcomePopup() {
     try {
       const week = getWeekNumber(new Date());
       if (localStorage.getItem("popupLastShownWeek") === String(week)) return;
-      setMessage(MESSAGES[(week - 1) % MESSAGES.length]);
+      const idx = (((week - BASE_WEEK) % MESSAGES.length) + MESSAGES.length) % MESSAGES.length;
+      setMessage(MESSAGES[idx]);
       setOpen(true);
       localStorage.setItem("popupLastShownWeek", String(week));
     } catch {
