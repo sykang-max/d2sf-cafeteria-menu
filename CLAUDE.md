@@ -3,6 +3,14 @@
 ## Always Do First
 - **Invoke the `frontend-design` skill** before writing any frontend code, every session, no exceptions.
 
+## Weekly Menu Updates (Slack → site)
+- If this session was started to update the weekly cafeteria menu (a menu image posted to the
+  `#5_공유해요_지하식당` channel / `C05B4T302KS`), **follow `MENU_INGESTION.md` exactly** — that is the
+  authoritative playbook. It covers reading the image, the data schema, registering the week,
+  validation (`npm run validate` + `npm run build`), and pushing to `main` (Vercel auto-deploys).
+- Menu updates touch **only** data (`src/data/*.js`) and, if a new tag is needed, `src/theme.js`'s `TAG`.
+  Do not change layout/components for a menu update.
+
 ## Reference Images
 - If a reference image is provided: match layout, spacing, typography, and color exactly. Swap in placeholder content (images via `https://placehold.co/`, generic copy). Do not improve or add to the design.
 - If no reference image: design from scratch with high craft (see guardrails below).
