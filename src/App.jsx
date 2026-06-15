@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import Header from "./components/Header.jsx";
 import WeeklyLunchMenu from "./components/WeeklyLunchMenu.jsx";
+import WelcomePopup from "./components/WelcomePopup.jsx";
 import { weeks } from "./data/index.js";
 
 export default function App() {
@@ -10,6 +11,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
+      <WelcomePopup />
       <Header weeks={weeks} weekId={weekId} onWeekChange={setWeekId} />
       <main>
         <WeeklyLunchMenu week={week} />
