@@ -11,6 +11,16 @@ import { CUISINE, TAG, MEALS, BRAND } from "../theme.js";
 const sum = (items) => items.reduce((s, [, k]) => s + k, 0);
 const CUISINES = ["전체", ...Object.keys(CUISINE)];
 
+// 현재 시각(브라우저 로컬 기준)에 해당하는 끼니를 추정합니다.
+//   ~10:30 조식 · 10:30~14:30 중식 · 그 이후 석식
+const currentMeal = () => {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  if (mins < 10 * 60 + 30) return "조식"; // 새벽~오전 10:30
+  if (mins < 14 * 60 + 30) return "중식"; // 10:30~14:30
+  return "석식"; // 14:30 이후
+};
+
 // 카드의 부드러운 그린 틴트 그림자 (base → elevated 레이어링)
 const CARD_SHADOW = "0 1px 2px rgba(0,140,21,0.05), 0 6px 16px -6px rgba(0,140,21,0.10)";
 
@@ -64,7 +74,11 @@ export default function WeeklyLunchMenu({ week }) {
   const todayEntry = DAYS.find(([d]) => d === todayKey);
   const todayInWeek = Boolean(todayEntry);
 
-  const [meal, setMeal] = useState("중식");
+  // 기본 끼니는 현재 시각에 맞춰 선택. 해당 끼니 데이터가 없으면 중식으로 폴백.
+  const [meal, setMeal] = useState(() => {
+    const guess = currentMeal();
+    return SETS.some((s) => s.meal === guess) ? guess : "중식";
+  });
   const [q, setQ] = useState("");
   const [cuisine, setCuisine] = useState("전체");
   const [view, setView] = useState("today"); // 랜딩 기본 화면: 오늘의 메뉴
