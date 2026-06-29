@@ -20,7 +20,7 @@ export default function Header({ weeks, weekId, onWeekChange }) {
             <img src="/d2sf-logo.png" alt="D2SF" className="h-5 w-auto sm:h-6" />
           </span>
           <div className="leading-tight">
-            <h1 className="text-[18px] font-extrabold tracking-tight text-white sm:text-[20px]">구내식당 식단표</h1>
+            <h1 className="text-[18px] font-extrabold tracking-tight text-white sm:text-[20px]">카페테리아 주간 메뉴</h1>
             <p className="text-[11px] font-medium text-white/70">D2SF Cafeteria</p>
           </div>
         </div>

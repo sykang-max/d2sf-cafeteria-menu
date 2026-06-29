@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "D2SF 구내식당 주간 식단표",
+  "description": "D2SF 카페테리아 주간 메뉴",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
