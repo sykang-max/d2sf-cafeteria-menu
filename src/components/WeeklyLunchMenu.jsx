@@ -159,7 +159,7 @@ export default function WeeklyLunchMenu({ week }) {
           <div className="mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.green }}>
             <UtensilsCrossed size={14} /> 오늘 카페테리아, 신선하게 한 끼
           </div>
-          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">이번 주 메뉴 🥗</h1>
+          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">이번 주 식단표 🥗</h1>
           <p className="mt-1 text-[14px] text-stone-500">{range}</p>
         </header>
 
@@ -342,6 +342,7 @@ export default function WeeklyLunchMenu({ week }) {
           <Info size={13} className="mt-0.5 shrink-0" />
           출처: 화재서초 식단표 · Slack D2SF #5_공유해요_지하식당 · 칼로리는 추정치 · 매주 공지로 업데이트
         </footer>
+        <p className="mt-3 text-center text-[11px] text-stone-400">© 2026 Seoyoon Kang · evom.ai</p>
       </div>
     </div>
   );
