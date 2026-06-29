@@ -159,7 +159,7 @@ export default function WeeklyLunchMenu({ week }) {
           <div className="mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.green }}>
             <UtensilsCrossed size={14} /> 오늘 카페테리아, 신선하게 한 끼
           </div>
-          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">이번 주 식단표 🥗</h1>
+          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">이번 주 메뉴 🥗</h1>
           <p className="mt-1 text-[14px] text-stone-500">{range}</p>
         </header>
 
