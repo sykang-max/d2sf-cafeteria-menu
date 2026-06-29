@@ -3,7 +3,7 @@ import { Search, X, CalendarDays, CalendarCheck, LayoutList, Flame, Info, Utensi
 import { CUISINE, TAG, MEALS, BRAND } from "../theme.js";
 
 /**
- * 지하식당 주간 식단표 (프레젠테이션 컴포넌트)
+ * 구내식당 주간 식단표 (프레젠테이션 컴포넌트)
  * 주차 데이터는 `week` prop으로 주입받습니다 — { id, label, range, days, sets, staticTakeout }.
  * 로직·레이아웃은 원본 그대로 유지하고, 팔레트만 써브웨이 그린·옐로우 체계로 재배색.
  */
@@ -157,7 +157,7 @@ export default function WeeklyLunchMenu({ week }) {
       <div className="mx-auto max-w-6xl px-5 py-8">
         <header className="text-center">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.green }}>
-            <UtensilsCrossed size={14} /> 오늘 지하식당, 신선하게 한 끼
+            <UtensilsCrossed size={14} /> 오늘 구내식당, 신선하게 한 끼
           </div>
           <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">이번 주 식단표 🥗</h1>
           <p className="mt-1 text-[14px] text-stone-500">{range}</p>
