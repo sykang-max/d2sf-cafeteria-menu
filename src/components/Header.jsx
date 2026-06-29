@@ -21,7 +21,7 @@ export default function Header({ weeks, weekId, onWeekChange }) {
           </span>
           <div className="leading-tight">
             <h1 className="text-[18px] font-extrabold tracking-tight text-white sm:text-[20px]">지하식당 식단표</h1>
-            <p className="text-[11px] font-medium text-white/70">D2SF Cafeteria · Weekly Lunch</p>
+            <p className="text-[11px] font-medium text-white/70">D2SF Cafeteria</p>
           </div>
         </div>
 
