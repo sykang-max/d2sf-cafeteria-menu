@@ -32,7 +32,7 @@
 - `src/data/index.js`에서 새 주차를 import하고 `weeks` 배열 **맨 앞**에 넣는다(최신이 기본 선택).
 
 ## STEP 5 — 에셋 생성·검증
-- `npm install` → `npm run og` (public/og-mon~fri.png 5장 재생성, puppeteer/Chromium 필요).
+- `npm install` → `npm run og` (public/og.png 1장 재생성 — 코너별 요일 대표메뉴 주간 프리뷰, puppeteer/Chromium 필요).
   - Chromium이 없어 `npm run og`가 실패하면 **데이터 변경은 그대로 진행**하고 최종 보고에 "OG 미생성" 명시.
 - `npm run build`로 데이터 컴파일 검증.
 
@@ -41,7 +41,7 @@
 
 ## STEP 7 — 커밋·푸시
 - `git config user.email "menu-bot@evom.ai"` / `git config user.name "menu-bot"`.
-- 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, (생성됐다면) `public/og-*.png`. **다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
+- 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, (생성됐다면) `public/og.png`. **다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
 - 커밋 메시지(따옴표 없이): `식단표 자동 업데이트: <label> (<range>)`.
 - `git push origin main`. 푸시가 인증으로 실패하면 `gh pr create --fill --base main`로 PR을 연다. 어느 쪽이 됐는지 보고.
 
