@@ -30,6 +30,7 @@
 - 다음 id 결정: `src/data/menu-2026-w*.js` 중 최대 N을 찾아 `2026-w<N+1>`, 파일명 `src/data/menu-2026-w<N+1>.js`.
 - `week.id`=`2026-w<N+1>`, `label`=포스터 주차 라벨, `range`=STEP2의 날짜범위, `days`=`[["월","MM.DD"],…]` 5개.
 - `src/data/index.js`에서 새 주차를 import하고 `weeks` 배열 **맨 앞**에 넣는다(최신이 기본 선택).
+- `index.html`의 `og:title`과 `twitter:title` 끝 `(#…)` 부분을 새 주차로 갱신한다. 형식: 라벨 `6월 5주차` → `(#6월 #5주차)` (라벨의 공백을 ` #`로 치환 후 `(#…)`로 감쌈). 예: `content="D2SF 카페테리아 — 이번 주 메뉴 (#7월 #1주차)"`.
 
 ## STEP 5 — 에셋 생성·검증
 - `npm install` → `npm run og` (public/og.png 1장 재생성 — 코너별 요일 대표메뉴 주간 프리뷰, puppeteer/Chromium 필요). `단가` 태그(보라색 스페셜) 셀엔 자동으로 "Special Menu" 태그가 표시된다.
@@ -41,7 +42,7 @@
 
 ## STEP 7 — 커밋·푸시
 - `git config user.email "menu-bot@evom.ai"` / `git config user.name "menu-bot"`.
-- 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, (생성됐다면) `public/og.png`. **다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
+- 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, `index.html`(title 주차 갱신분), (생성됐다면) `public/og.png`. **다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
 - 커밋 메시지(따옴표 없이): `식단표 자동 업데이트: <label> (<range>)`.
 - `git push origin main`. 푸시가 인증으로 실패하면 `gh pr create --fill --base main`로 PR을 연다. 어느 쪽이 됐는지 보고.
 
