@@ -30,7 +30,7 @@
 - 다음 id 결정: `src/data/menu-2026-w*.js` 중 최대 N을 찾아 `2026-w<N+1>`, 파일명 `src/data/menu-2026-w<N+1>.js`.
 - `week.id`=`2026-w<N+1>`, `label`=포스터 주차 라벨, `range`=STEP2의 날짜범위, `days`=`[["월","MM.DD"],…]` 5개.
 - `src/data/index.js`에서 새 주차를 import하고 `weeks` 배열 **맨 앞**에 넣는다(최신이 기본 선택).
-- `index.html`의 `og:title`과 `twitter:title` 끝 `(#…)` 부분을 새 주차로 갱신한다. 형식: 라벨 `6월 5주차` → `(#6월 #5주차)` (라벨의 공백을 ` #`로 치환 후 `(#…)`로 감쌈). 예: `content="D2SF 카페테리아 — 이번 주 메뉴 (#7월 #1주차)"`.
+- `index.html`의 `og:title`과 `twitter:title` 끝 `(…)` 부분을 새 주차 라벨로 갱신한다. 형식: 라벨을 그대로 괄호로 감쌈 → `(6월 5주차)`. 예: `content="D2SF 카페테리아 — 이번 주 메뉴 (7월 1주차)"`.
 
 ## STEP 5 — 에셋 생성·검증
 - `npm install` → `npm run og` (public/og.png 1장 재생성 — 코너별 요일 대표메뉴 주간 프리뷰, puppeteer/Chromium 필요). `단가` 태그(보라색 스페셜) 셀엔 자동으로 "Special Menu" 태그가 표시된다.
