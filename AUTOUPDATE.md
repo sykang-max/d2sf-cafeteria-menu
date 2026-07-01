@@ -32,7 +32,7 @@
 - `src/data/index.js`에서 새 주차를 import하고 `weeks` 배열 **맨 앞**에 넣는다(최신이 기본 선택).
 
 ## STEP 5 — 에셋 생성·검증
-- `npm install` → `npm run og` (public/og.png 1장 재생성 — 코너별 요일 대표메뉴 주간 프리뷰, puppeteer/Chromium 필요).
+- `npm install` → `npm run og` (public/og.png 1장 재생성 — 코너별 요일 대표메뉴 주간 프리뷰, puppeteer/Chromium 필요). `단가` 태그(보라색 스페셜) 셀엔 자동으로 수기 낙서 마크가 표시된다.
   - Chromium이 없어 `npm run og`가 실패하면 **데이터 변경은 그대로 진행**하고 최종 보고에 "OG 미생성" 명시.
 - `npm run build`로 데이터 컴파일 검증.
 
