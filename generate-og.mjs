@@ -62,7 +62,7 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
   .hero { display:flex; align-items:baseline; gap:13px; padding:18px 44px 12px; }
   .hero .t { font-size:30px; font-weight:800; letter-spacing:-.02em; }
   .hero .r { font-size:18px; font-weight:700; color:#a8a29e; }
-  .table { padding:0 44px; display:grid; grid-template-columns:150px repeat(5, 1fr); gap:8px; }
+  .table { padding:0 44px; display:grid; grid-template-columns:150px repeat(${week.days.length}, 1fr); gap:8px; }
   .corner { display:flex; align-items:center; gap:8px; font-size:17px; font-weight:800;
     letter-spacing:-.02em; color:#1a1a1a; padding-right:6px; }
   .corner .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
