@@ -7,6 +7,7 @@
 //   import { week as w2026w3 } from "./menu-2026-w3.js";
 //   export const weeks = [w2026w3, w2026w2];
 
+import { week as w2026w9 } from "./menu-2026-w9.js";
 import { week as w2026w8 } from "./menu-2026-w8.js";
 import { week as w2026w7 } from "./menu-2026-w7.js";
 import { week as w2026w6 } from "./menu-2026-w6.js";
@@ -16,4 +17,4 @@ import { week as w2026w3 } from "./menu-2026-w3.js";
 import { week as w2026w2 } from "./menu-2026-w2.js";
 
 // 최신 주차를 배열 맨 앞에 두세요. weeks[0] 이 기본 선택됩니다.
-export const weeks = [w2026w8, w2026w7, w2026w6, w2026w5, w2026w4, w2026w3, w2026w2];
+export const weeks = [w2026w9, w2026w8, w2026w7, w2026w6, w2026w5, w2026w4, w2026w3, w2026w2];
