@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { BRAND } from "../theme.js";
+import { isCurrentWeek } from "../lib/weekDates.js";
 
 /**
  * 상단 그린 바 헤더 — D2SF 로고 + 타이틀 + 주차 선택 + 옐로우 배지.
@@ -45,6 +46,7 @@ export default function Header({ weeks, weekId, onWeekChange }) {
                 {weeks.map((w) => (
                   <option key={w.id} value={w.id} className="text-stone-900">
                     {w.label}
+                    {isCurrentWeek(w) ? " (이번 주)" : ""}
                   </option>
                 ))}
               </select>

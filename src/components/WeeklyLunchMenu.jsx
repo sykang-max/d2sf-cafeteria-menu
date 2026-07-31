@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Search, X, CalendarDays, CalendarCheck, LayoutList, Flame, Info, UtensilsCrossed, Feather, Beef } from "lucide-react";
 import { CUISINE, TAG, MEALS, BRAND } from "../theme.js";
+import { todayOf } from "../lib/weekDates.js";
 
 /**
  * 카페테리아 주간 메뉴 (프레젠테이션 컴포넌트)
@@ -19,6 +20,19 @@ const currentMeal = () => {
   if (mins < 14 * 60 + 30) return "중식"; // 10:30~14:30
   return "석식"; // 14:30 이후
 };
+
+// 선택한 주차가 오늘 기준 언제인지에 따른 본문 제목
+const HEADING = {
+  current: "이번 주 식단표",
+  next: "다음 주 식단표",
+  past: "지난 주차 식단표",
+};
+
+// "8월 3일(월)" 형태의 오늘 날짜 — 어느 주차를 보고 있는지 혼동되지 않게 함께 표기
+const TODAY_LABEL = (() => {
+  const d = new Date();
+  return `${d.getMonth() + 1}월 ${d.getDate()}일(${["일", "월", "화", "수", "목", "금", "토"][d.getDay()]})`;
+})();
 
 // 카드의 부드러운 그린 틴트 그림자 (base → elevated 레이어링)
 const CARD_SHADOW = "0 1px 2px rgba(0,140,21,0.05), 0 6px 16px -6px rgba(0,140,21,0.10)";
@@ -64,14 +78,15 @@ function SetCard({ s, showKcal }) {
   );
 }
 
-export default function WeeklyLunchMenu({ week }) {
+export default function WeeklyLunchMenu({ week, relation = "current" }) {
   const { days: DAYS, sets: SETS, staticTakeout: STATIC_TAKEOUT, range } = week;
 
-  // 오늘 요일(브라우저 기준)을 주차 데이터의 요일 키와 매칭
-  const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
-  const todayKey = WEEKDAY[new Date().getDay()];
-  const todayEntry = DAYS.find(([d]) => d === todayKey);
+  // 오늘 판정은 요일 이름이 아니라 "실제 날짜"로 합니다.
+  // 요일만 비교하면 다음 주 식단을 보고 있을 때도 같은 요일이 오늘로 표시됩니다.
+  const todayEntry = useMemo(() => todayOf(week), [week]);
+  const todayKey = todayEntry?.key ?? null;
   const todayInWeek = Boolean(todayEntry);
+  const isThisWeek = relation === "current";
 
   // 기본 끼니는 현재 시각에 맞춰 선택. 해당 끼니 데이터가 없으면 중식으로 폴백.
   const [meal, setMeal] = useState(() => {
@@ -79,13 +94,16 @@ export default function WeeklyLunchMenu({ week }) {
     return SETS.some((s) => s.meal === guess) ? guess : "중식";
   });
   const [q, setQ] = useState("");
-  const [view, setView] = useState("today"); // 랜딩 기본 화면: 오늘의 메뉴
+  // 랜딩 기본 화면: 이번 주면 '오늘', 다른 주차면 '요일별'(그 주에는 오늘이 없으므로)
+  const [view, setView] = useState(() => (todayInWeek ? "today" : "day"));
   const [showKcal, setShowKcal] = useState(true);
 
-  // 주차가 바뀌면 검색어를 초기화 (선택한 메뉴가 새 주차에 없을 수 있으므로)
+  // 주차가 바뀌면 검색어를 초기화하고(선택한 메뉴가 새 주차에 없을 수 있으므로)
+  // 보기도 그 주차에 맞게 되돌립니다.
   useEffect(() => {
     setQ("");
-  }, [week.id]);
+    setView(todayInWeek ? "today" : "day");
+  }, [week.id, todayInWeek]);
 
   const visible = useMemo(
     () =>
@@ -159,8 +177,13 @@ export default function WeeklyLunchMenu({ week }) {
           <div className="mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.green }}>
             <UtensilsCrossed size={14} /> 오늘 카페테리아, 신선하게 한 끼
           </div>
-          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">이번 주 식단표 🥗</h1>
+          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-stone-900">{HEADING[relation] ?? `${week.label} 식단표`} 🥗</h1>
           <p className="mt-1 text-[14px] text-stone-500">{range}</p>
+          {!isThisWeek && (
+            <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-stone-100 px-3 py-1 text-[12px] font-bold text-stone-500">
+              <CalendarDays size={12} /> 보고 있는 주차: {week.label} · 오늘은 {TODAY_LABEL}
+            </p>
+          )}
         </header>
 
         <div className="mt-5 flex justify-center gap-1.5">
@@ -228,8 +251,17 @@ export default function WeeklyLunchMenu({ week }) {
           <div className="mt-5">
             {!todayInWeek ? (
               <div className="rounded-2xl border border-stone-200 bg-stone-50/60 p-8 text-center" style={{ boxShadow: CARD_SHADOW }}>
-                <p className="text-[15px] font-bold text-stone-700">오늘({todayKey}요일)은 식단 운영일이 아니에요 🌿</p>
-                <p className="mt-1 text-[13px] text-stone-400">평일(월~금) 식단은 '요일별' 탭에서 확인하세요.</p>
+                {isThisWeek ? (
+                  <>
+                    <p className="text-[15px] font-bold text-stone-700">오늘({TODAY_LABEL})은 식단 운영일이 아니에요 🌿</p>
+                    <p className="mt-1 text-[13px] text-stone-400">평일(월~금) 식단은 '요일별' 탭에서 확인하세요.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[15px] font-bold text-stone-700">{week.label}에는 오늘({TODAY_LABEL})이 없어요 🗓️</p>
+                    <p className="mt-1 text-[13px] text-stone-400">{range} 식단이에요. 요일별로 확인하시거나 헤더에서 주차를 바꿔 주세요.</p>
+                  </>
+                )}
                 <button onClick={() => setView("day")} className="mt-4 rounded-xl px-4 py-2 text-[13px] font-bold text-white transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ backgroundColor: BRAND.green, outlineColor: BRAND.green }}>
                   요일별 보기
                 </button>
@@ -241,7 +273,7 @@ export default function WeeklyLunchMenu({ week }) {
                 <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                   <h3 className="flex items-center gap-2 text-[18px] font-extrabold text-stone-900">
                     <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-extrabold text-white" style={{ backgroundColor: BRAND.green }}>오늘</span>
-                    {todayKey}요일 <span className="text-[12px] font-normal text-stone-400">{todayEntry?.[1]}</span>
+                    {todayKey}요일 <span className="text-[12px] font-normal text-stone-400">{todayEntry?.label}</span>
                   </h3>
                   {renderAnalysis(dayAnalysis(todayKey))}
                 </div>
@@ -257,16 +289,20 @@ export default function WeeklyLunchMenu({ week }) {
           <div className="mt-5 space-y-5">
             {/* 요일 바로가기 (sticky) */}
             <div className="sticky top-0 z-20 -mx-1 flex flex-nowrap items-center gap-1 border-b border-stone-100 bg-white/90 px-1 py-2 backdrop-blur sm:flex-wrap sm:gap-1.5">
-              {DAYS.filter(([d]) => visible.some((s) => s.day === d)).map(([d, date]) => (
-                <button
-                  key={d}
-                  onClick={() => jumpTo(`day-${d}`)}
-                  className="inline-flex min-w-0 flex-1 items-baseline justify-center gap-1 whitespace-nowrap rounded-full border border-stone-200 bg-white px-2 py-1 text-[13px] font-bold text-stone-600 transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green sm:flex-none sm:justify-start sm:px-3"
-                >
-                  {d}
-                  <span className="text-[10px] font-normal text-stone-400">{date}</span>
-                </button>
-              ))}
+              {DAYS.filter(([d]) => visible.some((s) => s.day === d)).map(([d, date]) => {
+                const isToday = d === todayKey;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => jumpTo(`day-${d}`)}
+                    className="inline-flex min-w-0 flex-1 items-baseline justify-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[13px] font-bold transition-transform duration-150 ease-out hover:border-subway-green hover:text-subway-green active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-subway-green sm:flex-none sm:justify-start sm:px-3"
+                    style={isToday ? { borderColor: BRAND.green, backgroundColor: BRAND.greenSoft, color: BRAND.greenDark } : { borderColor: "#e7e5e4", backgroundColor: "#fff", color: "#57534e" }}
+                  >
+                    {d}
+                    <span className="text-[10px] font-normal" style={{ color: isToday ? BRAND.greenDark : "#a8a29e" }}>{date}</span>
+                  </button>
+                );
+              })}
             </div>
             {DAYS.map(([d, date]) => {
               const sets = visible.filter((s) => s.day === d);
@@ -275,6 +311,9 @@ export default function WeeklyLunchMenu({ week }) {
                 <div key={d} id={`day-${d}`} className="scroll-mt-16">
                   <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     <h3 className="flex items-baseline gap-2 text-[17px] font-extrabold text-stone-900">
+                      {d === todayKey && (
+                        <span className="inline-flex items-center self-center rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white" style={{ backgroundColor: BRAND.green }}>오늘</span>
+                      )}
                       {d}요일 <span className="text-[12px] font-normal text-stone-400">{date}</span>
                     </h3>
                     {renderAnalysis(dayAnalysis(d))}
