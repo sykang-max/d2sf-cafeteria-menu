@@ -29,11 +29,13 @@
 ## STEP 4 — 주차 등록
 - 다음 id 결정: `src/data/menu-2026-w*.js` 중 최대 N을 찾아 `2026-w<N+1>`, 파일명 `src/data/menu-2026-w<N+1>.js`.
 - `week.id`=`2026-w<N+1>`, `label`=포스터 주차 라벨, `range`=STEP2의 날짜범위, `days`=`[["월","MM.DD"],…]` 5개.
-- `src/data/index.js`에서 새 주차를 import하고 `weeks` 배열 **맨 앞**에 넣는다(최신이 기본 선택).
-- `index.html`의 `og:title`과 `twitter:title` 끝 `(…)` 부분을 새 주차 라벨로 갱신한다. 형식: 라벨을 그대로 괄호로 감쌈 → `(6월 5주차)`. 예: `content="D2SF 카페테리아 — 이번 주 메뉴 (7월 1주차)"`.
+- `src/data/index.js`에서 새 주차를 import하고 `weeks` 배열 **맨 앞**에 넣는다.
+  - 배열 순서는 드롭다운 표시 순서일 뿐이고, **화면에 처음 열리는 주차는 오늘 날짜로 정해진다**(`src/lib/weekDates.js`). 다음 주 식단을 미리 넣어도 이번 주가 먼저 보인다.
+- `index.html`의 제목은 **건드리지 않는다.** 주차 라벨은 OG 이미지 안에 들어가고, `og:title`은 주차를 적지 않는 고정 문구다(미리 등록해도 제목이 어긋나지 않게 하기 위함).
 
 ## STEP 5 — 에셋 생성·검증
-- `npm install` → `npm run og` (public/og.png 1장 재생성 — 코너별 요일 대표메뉴 주간 프리뷰, puppeteer/Chromium 필요). `단가` 태그(보라색 스페셜) 셀엔 자동으로 "Special Menu" 태그가 표시된다.
+- `npm install` → `npm run og` (puppeteer/Chromium 필요). 등록된 **모든 주차의 프리뷰를 재생성**한다: `public/og/<주차id>.png` + `public/og/manifest.json` + 폴백 `public/og.png`. `단가` 태그(보라색 스페셜) 셀엔 자동으로 "Special Menu" 태그가 표시된다.
+  - `/api/og`가 manifest의 `mon~fri`와 **오늘(KST)**을 비교해 이번 주 이미지를 고른다. 그래서 다음 주를 미리 등록해도 링크 프리뷰는 그 주가 되기 전까지 안 바뀐다 — `?r=` 숫자를 올릴 필요 없다.
   - Chromium이 없어 `npm run og`가 실패하면 **데이터 변경은 그대로 진행**하고 최종 보고에 "OG 미생성" 명시.
 - `npm run build`로 데이터 컴파일 검증.
 
@@ -42,7 +44,7 @@
 
 ## STEP 7 — 커밋·푸시
 - `git config user.email "menu-bot@evom.ai"` / `git config user.name "menu-bot"`.
-- 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, `index.html`(title 주차 갱신분), (생성됐다면) `public/og.png`. **다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
+- 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, (생성됐다면) `public/og/`, `public/og.png`. **`index.html`·다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
 - 커밋 메시지(따옴표 없이): `식단표 자동 업데이트: <label> (<range>)`.
 - `git push origin main`. 푸시가 인증으로 실패하면 `gh pr create --fill --base main`로 PR을 연다. 어느 쪽이 됐는지 보고.
 

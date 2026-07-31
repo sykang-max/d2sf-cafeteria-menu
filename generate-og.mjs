@@ -1,18 +1,23 @@
 // ─────────────────────────────────────────────────────────────
-// OG(링크 프리뷰) 이미지 생성기 — 주간 1장 (코너별 요일 대표메뉴)
-//   - weeks[0] (최신 주차)에서 점심(중식) 5개 코너 × 5요일(월~금)의
-//     대표 메뉴 1개씩을 1200×630 그리드 카드로 렌더 → public/og.png
+// OG(링크 프리뷰) 이미지 생성기 — 주차별 1장씩 (코너별 요일 대표메뉴)
+//   - 등록된 모든 주차에 대해 점심(중식) 5개 코너 × 5요일(월~금)의
+//     대표 메뉴 1개씩을 1200×630 그리드 카드로 렌더
+//     → public/og/<주차id>.png + public/og/manifest.json
 //   - 코너별로 한 줄(총 5줄). 칼로리·단가 텍스트는 표기하지 않음.
 //   - 단가(보라색 박스) 스페셜 메뉴 셀에는 "Special Menu" 태그를 붙인다.
+//
+//   /api/og 가 manifest.json의 mon~fri 구간과 오늘(KST)을 비교해
+//   "이번 주" 이미지를 골라 반환한다. 그래서 다음 주 식단을 미리 등록해도
+//   링크 프리뷰는 그 주가 되기 전까지 바뀌지 않는다.
 //
 // ▶ 주간 메뉴 갱신 시 실행:  node generate-og.mjs  (= npm run og)
 // ─────────────────────────────────────────────────────────────
 import puppeteer from "puppeteer";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
 import { weeks } from "./src/data/index.js";
+import { weekSpan, defaultWeekId } from "./src/lib/weekDates.js";
 import { BRAND } from "./src/theme.js";
 
-const week = weeks[0];
 const CORNER_ORDER = ["Korean A", "Korean B", "Snap snack", "International A", "International B"];
 const CORNER_COLOR = {
   "Korean A": BRAND.green,
@@ -26,16 +31,17 @@ const FONT = "'Pretendard Variable', Pretendard, system-ui, 'Apple SD Gothic Neo
 const PURPLE = "#7C3AED"; // 포스터 단가 보라색 박스와 연결되는 스페셜 색
 
 // 코너 × 요일 대표메뉴(중식 첫 항목) + 단가 스페셜 여부(set.tag === "단가")
-const rows = CORNER_ORDER.map((corner) => ({
-  corner,
-  color: CORNER_COLOR[corner] ?? BRAND.charcoal,
-  cells: week.days.map(([d, date]) => {
-    const set = week.sets.find((s) => s.meal === "중식" && s.day === d && s.corner === corner);
-    return { d, date, dish: set ? set.items[0]?.[0] ?? "—" : "—", special: set?.tag === "단가" };
-  }),
-}));
+const buildRows = (week) =>
+  CORNER_ORDER.map((corner) => ({
+    corner,
+    color: CORNER_COLOR[corner] ?? BRAND.charcoal,
+    cells: week.days.map(([d, date]) => {
+      const set = week.sets.find((s) => s.meal === "중식" && s.day === d && s.corner === corner);
+      return { d, date, dish: set ? set.items[0]?.[0] ?? "—" : "—", special: set?.tag === "단가" };
+    }),
+  }));
 
-const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
+const buildHtml = (week, rows) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -106,13 +112,40 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
   <div class="foot"><span>코너별 요일 대표메뉴</span><span><b>what2eat-d2sf.vercel.app</b></span></div>
 </body></html>`;
 
+// 로컬 시간대 기준 YYYY-MM-DD (toISOString은 UTC로 밀리므로 쓰지 않음)
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+mkdirSync("./public/og", { recursive: true });
+
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const page = await browser.newPage();
 await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
-await page.setContent(html, { waitUntil: "load" });
-await page.evaluate(async () => { try { await document.fonts.ready; } catch {} });
-await new Promise((r) => setTimeout(r, 500));
-await page.screenshot({ path: "./public/og.png", clip: { x: 0, y: 0, width: 1200, height: 630 } });
+
+const manifest = [];
+for (const week of weeks) {
+  const rows = buildRows(week);
+  await page.setContent(buildHtml(week, rows), { waitUntil: "load" });
+  await page.evaluate(async () => { try { await document.fonts.ready; } catch {} });
+  await new Promise((r) => setTimeout(r, 400));
+
+  const file = `og/${week.id}.png`;
+  await page.screenshot({ path: `./public/${file}`, clip: { x: 0, y: 0, width: 1200, height: 630 } });
+
+  const { mon, fri } = weekSpan(week);
+  manifest.push({ id: week.id, label: week.label, range: week.range, mon: ymd(mon), fri: ymd(fri), file });
+
+  const specials = rows.flatMap((r) => r.cells).filter((c) => c.special).length;
+  console.log(`  ${week.label.padEnd(9)} ${ymd(mon)}~${ymd(fri)} → public/${file} (Special ${specials}칸)`);
+}
 await browser.close();
-const specials = rows.flatMap((r) => r.cells).filter((c) => c.special).length;
-console.log(`OG 생성 완료: ${week.label} · 코너별 주간 대표메뉴 (Special Menu 태그 ${specials}칸)`);
+
+// /api/og 가 오늘(KST)에 맞는 주차를 고를 때 쓰는 색인. 최신 주차가 앞.
+manifest.sort((a, b) => (a.mon < b.mon ? 1 : -1));
+writeFileSync("./public/og/manifest.json", JSON.stringify({ weeks: manifest }, null, 2) + "\n");
+
+// public/og.png 는 manifest를 못 읽을 때만 쓰이는 폴백.
+// 생성 시점 기준 "이번 주" 이미지를 복사해 둔다.
+const fallbackId = defaultWeekId(weeks);
+copyFileSync(`./public/og/${fallbackId}.png`, "./public/og.png");
+
+console.log(`OG 생성 완료: ${manifest.length}개 주차 + manifest.json (폴백 og.png ← ${fallbackId})`);
