@@ -124,7 +124,21 @@ export function ReviewsProvider({ children }) {
     return data ?? [];
   }, []);
 
-  const ranking = useMemo(() => toRanking(Object.values(statsByDish)), [statsByDish]);
+  // 랭킹은 "대표메뉴" 이름으로만 노출합니다. 과거 "코너 · 메뉴" 형식으로 저장된
+  // 행은 " · " 뒤의 메뉴명으로 합산해 같은 메뉴끼리 하나로 모읍니다.
+  const ranking = useMemo(() => {
+    const merged = {};
+    for (const s of Object.values(statsByDish)) {
+      const i = String(s.dish).indexOf(" · ");
+      const dish = i >= 0 ? s.dish.slice(i + 3) : s.dish;
+      const m = merged[dish] || (merged[dish] = { dish, fire: 0, up: 0, meh: 0, skull: 0 });
+      m.fire += s.fire || 0;
+      m.up += s.up || 0;
+      m.meh += s.meh || 0;
+      m.skull += s.skull || 0;
+    }
+    return toRanking(Object.values(merged));
+  }, [statsByDish]);
 
   const value = useMemo(
     () => ({
