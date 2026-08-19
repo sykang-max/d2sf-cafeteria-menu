@@ -5,8 +5,9 @@
 
 -- 채팅 메시지: 4개 카드(탭)를 kind 로 구분해 한 테이블에 저장합니다.
 --   kind = 'chat'(자유대화) | 'rec'(맛집리스트) | 'mingle'(밍글링·소모임) | 'owner'(주인장께 톡톡).
---   맛집(rec)만 rec_place(가게명) + rec_category(walk=워크인 / delivery=배달) + rec_link(선택)을 쓰고,
---   나머지는 body(본문)만 사용합니다.
+--   맛집(rec)은 rec_place(가게명) + rec_category(walk=워크인 / delivery=배달) + rec_link(선택),
+--   밍글링(mingle)은 mingle_title(이벤트명) + mingle_when(시간) + mingle_where(장소) + mingle_cap(인원),
+--   자유대화/주인장께 톡톡은 body(본문)만 사용합니다.
 create table if not exists public.chat_messages (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users (id) on delete cascade,
@@ -17,6 +18,10 @@ create table if not exists public.chat_messages (
   rec_place    text check (rec_place is null or char_length(rec_place) <= 60),      -- 맛집 가게명
   rec_category text check (rec_category is null or rec_category in ('walk', 'delivery')),
   rec_link     text check (rec_link is null or char_length(rec_link) <= 300),
+  mingle_title text check (mingle_title is null or char_length(mingle_title) <= 60),  -- 밍글링 이벤트명
+  mingle_when  text check (mingle_when  is null or char_length(mingle_when)  <= 60),  -- 시간
+  mingle_where text check (mingle_where is null or char_length(mingle_where) <= 60),  -- 장소
+  mingle_cap   text check (mingle_cap   is null or char_length(mingle_cap)   <= 30),  -- 인원
   created_at   timestamptz not null default now()
 );
 
@@ -27,6 +32,12 @@ create index if not exists chat_messages_created_idx on public.chat_messages (cr
 alter table public.chat_messages drop constraint if exists chat_messages_kind_check;
 alter table public.chat_messages
   add constraint chat_messages_kind_check check (kind in ('chat', 'rec', 'mingle', 'owner'));
+
+-- ── 밍글링 구조화 컬럼 ── (기존 테이블에 이벤트명/시간/장소/인원 추가)
+alter table public.chat_messages add column if not exists mingle_title text;
+alter table public.chat_messages add column if not exists mingle_when  text;
+alter table public.chat_messages add column if not exists mingle_where text;
+alter table public.chat_messages add column if not exists mingle_cap   text;
 
 -- ── RLS ──
 alter table public.chat_messages enable row level security;
