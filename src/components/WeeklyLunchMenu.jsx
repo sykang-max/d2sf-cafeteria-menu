@@ -108,7 +108,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
   const [q, setQ] = useState("");
   // 랜딩 기본 화면: 이번 주면 '오늘', 다른 주차면 '요일별'(그 주에는 오늘이 없으므로)
   const [view, setView] = useState(() => (todayInWeek ? "today" : "day"));
-  const [showKcal, setShowKcal] = useState(true);
+  const showKcal = true; // kcal은 선택이 아니라 항상 표시 (토글 제거)
   const [showRanking, setShowRanking] = useState(false);
   const { configured: reviewsOn } = useReviews();
 
@@ -231,8 +231,8 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
               </button>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-1 basis-full rounded-lg border border-stone-200 bg-white p-0.5 sm:basis-0">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 rounded-lg border border-stone-200 bg-white p-0.5">
               {[
                 { id: "today", label: "오늘", Icon: CalendarCheck },
                 { id: "day", label: "요일별", Icon: CalendarDays },
@@ -249,13 +249,6 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => setShowKcal((x) => !x)}
-              className="flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
-              style={showKcal ? { borderColor: BRAND.green, backgroundColor: BRAND.greenSoft, color: BRAND.greenDark, outlineColor: BRAND.green } : { borderColor: "#e7e5e4", backgroundColor: "#fff", color: "#a8a29e", outlineColor: BRAND.green }}
-            >
-              <Flame size={13} /> kcal
-            </button>
             {reviewsOn && (
               <button
                 onClick={() => setShowRanking(true)}

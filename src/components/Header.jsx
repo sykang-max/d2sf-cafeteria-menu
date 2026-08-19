@@ -60,7 +60,7 @@ export default function Header({ weeks, weekId, onWeekChange, chatEnabled = fals
             <button
               onClick={onOpenChat}
               aria-label="Chat 열기"
-              className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-bold text-white ring-1 ring-white/30 transition-colors hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+              className="hidden shrink-0 items-center gap-1 rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-bold text-white ring-1 ring-white/30 transition-colors hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 sm:inline-flex"
               style={{ outlineColor: "#fff" }}
             >
               <MessageCircle size={15} /> Chat
