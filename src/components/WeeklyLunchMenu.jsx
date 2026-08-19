@@ -231,8 +231,8 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
               </button>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-1 rounded-lg border border-stone-200 bg-white p-0.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-1 basis-full rounded-lg border border-stone-200 bg-white p-0.5 sm:basis-0">
               {[
                 { id: "today", label: "오늘", Icon: CalendarCheck },
                 { id: "day", label: "요일별", Icon: CalendarDays },

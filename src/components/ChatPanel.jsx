@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
-// 지하식당 수다방 (실시간 채팅 패널)
-//   자유 대화 + 맛집 추천 카드(🚶 워크업 / 🛵 배달). 상단 필터로 맛집만 모아보기.
+// 지하식당 Chat (실시간 채팅 패널)
+//   자유 대화 + 맛집 추천 카드(🚶 워크인 / 🛵 배달). 상단 필터로 맛집만 모아보기.
 //   익명 닉네임 + 선택 소속 배지. 본인 메시지는 삭제 가능.
 // ─────────────────────────────────────────────────────────────
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +26,7 @@ function RecCard({ m, mine, onDelete }) {
     <div className="rounded-2xl border p-3" style={{ borderColor: BRAND.greenSoft, backgroundColor: "#fff", boxShadow: "0 2px 10px -6px rgba(0,140,21,0.25)" }}>
       <div className="mb-1 flex items-center gap-1.5">
         <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-white" style={{ backgroundColor: walk ? BRAND.green : "#B45309" }}>
-          {walk ? <Footprints size={12} /> : <Bike size={12} />}{walk ? "워크업" : "배달"}
+          {walk ? <Footprints size={12} /> : <Bike size={12} />}{walk ? "워크인" : "배달"}
         </span>
         <span className="text-[14px] font-extrabold text-stone-900">{m.rec_place}</span>
       </div>
@@ -93,7 +93,7 @@ export default function ChatPanel({ onClose }) {
   const saveId = () => { updateIdentity(draft); setEditId(false); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-stretch sm:justify-end" onClick={onClose} role="dialog" aria-modal="true" aria-label="지하식당 수다방">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-stretch sm:justify-end" onClick={onClose} role="dialog" aria-modal="true" aria-label="지하식당 Chat">
       <div
         className="flex h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white sm:h-full sm:max-w-sm sm:rounded-none"
         style={{ boxShadow: "0 20px 60px -12px rgba(0,0,0,0.35)", fontFamily: "'Pretendard Variable', Pretendard, system-ui, sans-serif" }}
@@ -102,7 +102,7 @@ export default function ChatPanel({ onClose }) {
         {/* 헤더 */}
         <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: BRAND.green }}>
           <div>
-            <h3 className="text-[15px] font-extrabold text-white">💬 지하식당 수다방</h3>
+            <h3 className="text-[15px] font-extrabold text-white">💬 지하식당 Chat</h3>
             <p className="text-[11px] text-white/80">점심 직전 실시간 · 익명</p>
           </div>
           <button onClick={onClose} aria-label="닫기" className="rounded-lg p-1 text-white/90 transition-transform active:scale-90 hover:bg-white/15"><X size={18} /></button>
@@ -176,7 +176,7 @@ export default function ChatPanel({ onClose }) {
               <button onClick={() => setRecOpen(false)} className="ml-auto text-stone-400"><X size={14} /></button>
             </div>
             <div className="flex gap-1.5">
-              {[{ id: "walk", label: "워크업", Icon: Footprints }, { id: "delivery", label: "배달", Icon: Bike }].map(({ id, label, Icon }) => (
+              {[{ id: "walk", label: "워크인", Icon: Footprints }, { id: "delivery", label: "배달", Icon: Bike }].map(({ id, label, Icon }) => (
                 <button key={id} onClick={() => setRec((r) => ({ ...r, category: id }))} className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-bold"
                   style={rec.category === id ? { borderColor: BRAND.green, backgroundColor: BRAND.greenSoft, color: BRAND.greenDark } : { borderColor: "#e7e5e4", color: "#78716c" }}>
                   <Icon size={12} /> {label}
