@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import Header from "./components/Header.jsx";
 import WeeklyLunchMenu from "./components/WeeklyLunchMenu.jsx";
 import WelcomePopup from "./components/WelcomePopup.jsx";
+import ChatLauncher from "./components/ChatLauncher.jsx";
 import { ReviewsProvider } from "./context/ReviewsContext.jsx";
 import { weeks } from "./data/index.js";
 import { defaultWeekId, weekRelation } from "./lib/weekDates.js";
@@ -22,6 +23,7 @@ export default function App() {
         <main>
           <WeeklyLunchMenu week={week} relation={relation} />
         </main>
+        <ChatLauncher />
         <Analytics />
       </div>
     </ReviewsProvider>
