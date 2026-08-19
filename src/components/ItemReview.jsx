@@ -73,7 +73,6 @@ export default function ItemReview({ dish }) {
           <>
             <span className="text-[12px] leading-none">{dom?.char}</span>
             <span className="font-mono tabular-nums">{n}</span>
-            {myKey && <span className="text-[9px]" style={{ color: BRAND.green }}>·내표</span>}
           </>
         ) : (
           <span className="opacity-80">💬 리뷰</span>
