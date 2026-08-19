@@ -124,21 +124,24 @@ export function ReviewsProvider({ children }) {
     return data ?? [];
   }, []);
 
-  // 랭킹은 "대표메뉴" 이름으로만 노출합니다. 과거 "코너 · 메뉴" 형식으로 저장된
-  // 행은 " · " 뒤의 메뉴명으로 합산해 같은 메뉴끼리 하나로 모읍니다.
-  const ranking = useMemo(() => {
+  // 통계를 "대표메뉴" 이름 기준으로 합산합니다. 과거 "코너 · 메뉴" 형식으로 저장된
+  // 행과 "메뉴" 행을 같은 메뉴로 모아, 카드 칩과 랭킹이 항상 동일한 누적 수치를 씁니다.
+  const mergedByDish = useMemo(() => {
     const merged = {};
     for (const s of Object.values(statsByDish)) {
-      const i = String(s.dish).indexOf(" · ");
-      const dish = i >= 0 ? s.dish.slice(i + 3) : s.dish;
+      const raw = String(s.dish);
+      const i = raw.indexOf(" · ");
+      const dish = normalizeDish(i >= 0 ? raw.slice(i + 3) : raw);
       const m = merged[dish] || (merged[dish] = { dish, fire: 0, up: 0, meh: 0, skull: 0 });
       m.fire += s.fire || 0;
       m.up += s.up || 0;
       m.meh += s.meh || 0;
       m.skull += s.skull || 0;
     }
-    return toRanking(Object.values(merged));
+    return merged;
   }, [statsByDish]);
+
+  const ranking = useMemo(() => toRanking(Object.values(mergedByDish)), [mergedByDish]);
 
   const value = useMemo(
     () => ({
@@ -150,10 +153,11 @@ export function ReviewsProvider({ children }) {
       ranking,
       submit,
       fetchComments,
-      getStat: (dish) => statsByDish[normalizeDish(dish)] ?? null,
+      // 카드 칩도 합산 통계(대표메뉴 기준)를 사용 — 랭킹과 수치가 일치합니다.
+      getStat: (dish) => mergedByDish[normalizeDish(dish)] ?? null,
       getMyVote: (dish) => myVotes[normalizeDish(dish)] ?? null,
     }),
-    [ready, userId, statsByDish, myVotes, ranking, submit, fetchComments]
+    [ready, userId, statsByDish, mergedByDish, myVotes, ranking, submit, fetchComments]
   );
 
   return <ReviewsContext.Provider value={value}>{children}</ReviewsContext.Provider>;
