@@ -9,10 +9,15 @@ import { useReviews } from "../context/ReviewsContext.jsx";
 /**
  * 카페테리아 주간 메뉴 (프레젠테이션 컴포넌트)
  * 주차 데이터는 `week` prop으로 주입받습니다 — { id, label, range, days, sets, staticTakeout }.
- * 로직·레이아웃은 원본 그대로 유지하고, 팔레트만 써브웨이 그린·옐로우 체계로 재배색.
+ * 로직·레이아웃은 원본 그대로 유지하고, 팔레트만 써브웨이 그린·옆로우 체계로 재배색.
  */
 
 const sum = (items) => items.reduce((s, [, k]) => s + k, 0);
+
+// 식단(세트) 단위 평가 키 — "코너 · 대표메뉴(첫 항목)". 코너별 뷰에서 코너명이
+// 요일로 바뀌어도 항상 원본 세트로 계산해 표가 갈리지 않게 합니다. 같은 식단이
+// 다음 주 다시 나오면 같은 키로 평점이 누적됩니다.
+const setReviewKey = (s) => `${s.corner} · ${s.items?.[0]?.[0] ?? ""}`;
 
 // 현재 시각(브라우저 로컬 기준)에 해당하는 끼니를 추정합니다.
 //   ~10:30 조식 · 10:30~14:30 중식 · 그 이후 석식
@@ -48,7 +53,7 @@ function CuisineTag({ c }) {
   );
 }
 
-function SetCard({ s, showKcal }) {
+function SetCard({ s, showKcal, reviewKey }) {
   const total = sum(s.items);
   const t = s.tag ? TAG[s.tag] : null;
   return (
@@ -62,21 +67,22 @@ function SetCard({ s, showKcal }) {
           </div>
           {s.price > 0 && <p className="mt-0.5 text-[11px] text-stone-400">{s.price.toLocaleString()}원</p>}
         </div>
-        {showKcal && !s.side && (
-          <span className="shrink-0 rounded-lg px-2 py-1 font-mono text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
-            {total}
-            <span className="text-[9px] font-normal">kcal</span>
-          </span>
-        )}
+        {/* 총 칼로리 배지 옆에 식단(세트) 단위 평가 칩을 나란히 배치 */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {showKcal && !s.side && (
+            <span className="rounded-lg px-2 py-1 font-mono text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
+              {total}
+              <span className="text-[9px] font-normal">kcal</span>
+            </span>
+          )}
+          {reviewKey && <ItemReview dish={reviewKey} />}
+        </div>
       </div>
       <div className="mt-2 space-y-0.5">
         {s.items.map(([n, k], i) => (
           <div key={i} className="flex items-baseline justify-between gap-2">
-            <span className="min-w-0 flex-1 text-[13.5px] text-stone-700">{n}</span>
-            <span className="flex shrink-0 items-baseline gap-1.5">
-              {showKcal && <span className="shrink-0 font-mono text-[11px] tabular-nums text-stone-300">{k}</span>}
-              <ItemReview dish={n} />
-            </span>
+            <span className="text-[13.5px] text-stone-700">{n}</span>
+            {showKcal && <span className="shrink-0 font-mono text-[11px] tabular-nums text-stone-300">{k}</span>}
           </div>
         ))}
       </div>
@@ -255,7 +261,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                 onClick={() => setShowRanking(true)}
                 className="flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
                 style={{ borderColor: "#e7e5e4", backgroundColor: "#fff", color: BRAND.greenDark, outlineColor: BRAND.green }}
-                title="역대 최고 평점 메뉴"
+                title="역대 최고 평점 식단"
               >
                 <Trophy size={13} style={{ color: BRAND.yellow }} /> 랭킹
               </button>
@@ -297,7 +303,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {todaySets.map((s, i) => (
-                    <SetCard key={i} s={s} showKcal={showKcal} />
+                    <SetCard key={i} s={s} showKcal={showKcal} reviewKey={setReviewKey(s)} />
                   ))}
                 </div>
               </div>
@@ -338,7 +344,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sets.map((s, i) => (
-                      <SetCard key={i} s={s} showKcal={showKcal} />
+                      <SetCard key={i} s={s} showKcal={showKcal} reviewKey={setReviewKey(s)} />
                     ))}
                   </div>
                 </div>
@@ -367,7 +373,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                   <h3 className="mb-2 text-[17px] font-extrabold text-stone-900">{cn}</h3>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sets.map((s, i) => (
-                      <SetCard key={i} s={{ ...s, corner: `${s.day}요일` }} showKcal={showKcal} />
+                      <SetCard key={i} s={{ ...s, corner: `${s.day}요일` }} showKcal={showKcal} reviewKey={setReviewKey(s)} />
                     ))}
                   </div>
                 </div>
