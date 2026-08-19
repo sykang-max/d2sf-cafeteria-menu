@@ -3,15 +3,16 @@
 --   Supabase 대시보드 → SQL Editor 에 붙여넣고 실행하세요. (여러 번 실행해도 안전)
 -- ═════════════════════════════════════════════════════════════
 
--- 채팅 메시지: 자유 대화(kind='chat')와 맛집 추천 카드(kind='rec')를 한 테이블에.
---   맛집 추천은 rec_place(가게명) + rec_category(walk=도보 / delivery=배달) + rec_link(선택),
---   body 에는 한줄평/본문이 들어갑니다.
+-- 채팅 메시지: 4개 카드(탭)를 kind 로 구분해 한 테이블에 저장합니다.
+--   kind = 'chat'(자유대화) | 'rec'(맛집리스트) | 'mingle'(밍글링·소모임) | 'owner'(주인장께 톡톡).
+--   맛집(rec)만 rec_place(가게명) + rec_category(walk=워크인 / delivery=배달) + rec_link(선택)을 쓰고,
+--   나머지는 body(본문)만 사용합니다.
 create table if not exists public.chat_messages (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users (id) on delete cascade,
   nickname     text not null check (char_length(nickname) <= 20),
   affiliation  text check (affiliation is null or char_length(affiliation) <= 20),  -- 선택 소속
-  kind         text not null default 'chat' check (kind in ('chat', 'rec')),
+  kind         text not null default 'chat' check (kind in ('chat', 'rec', 'mingle', 'owner')),
   body         text check (body is null or char_length(body) <= 500),
   rec_place    text check (rec_place is null or char_length(rec_place) <= 60),      -- 맛집 가게명
   rec_category text check (rec_category is null or rec_category in ('walk', 'delivery')),
@@ -20,6 +21,12 @@ create table if not exists public.chat_messages (
 );
 
 create index if not exists chat_messages_created_idx on public.chat_messages (created_at);
+
+-- ── kind 확장 마이그레이션 ── (기존 테이블에 밍글링/주인장께 톡톡 값을 허용)
+--   이미 만들어진 테이블은 위 create 문이 건너뛰어지므로, 아래에서 CHECK 제약을 갱신합니다.
+alter table public.chat_messages drop constraint if exists chat_messages_kind_check;
+alter table public.chat_messages
+  add constraint chat_messages_kind_check check (kind in ('chat', 'rec', 'mingle', 'owner'));
 
 -- ── RLS ──
 alter table public.chat_messages enable row level security;

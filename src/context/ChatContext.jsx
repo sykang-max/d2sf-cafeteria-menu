@@ -1,7 +1,8 @@
 // ─────────────────────────────────────────────────────────────
 // 실시간 채팅 상태 (익명 인증 · 메시지 로드 · Realtime · 전송 · 삭제 · 정체성)
 //   단일 라이브 방: 최근 메시지를 시간순으로 보여주고 Realtime 으로 실시간 추가.
-//   메시지 kind: 'chat'(자유 대화) | 'rec'(맛집 추천 카드).
+//   메시지 kind(=카드/탭 구분): 'chat'(자유대화) | 'rec'(맛집리스트 카드)
+//                              | 'mingle'(밍글링·소모임) | 'owner'(주인장께 톡톡).
 // ─────────────────────────────────────────────────────────────
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured, ensureAnonSession } from "../lib/supabase.js";
@@ -83,11 +84,13 @@ export function ChatProvider({ children }) {
     return { ok: true };
   }, []);
 
+  // 자유대화/밍글링/주인장께 톡톡은 모두 텍스트 메시지 — kind 로 탭(카드)을 구분합니다.
   const sendChat = useCallback(
-    (text) => {
+    (text, kind = "chat") => {
       const body = (text || "").trim().slice(0, 500);
       if (!body) return Promise.resolve({ error: "empty" });
-      return insertRow({ kind: "chat", body });
+      const k = ["chat", "mingle", "owner"].includes(kind) ? kind : "chat";
+      return insertRow({ kind: k, body });
     },
     [insertRow]
   );
