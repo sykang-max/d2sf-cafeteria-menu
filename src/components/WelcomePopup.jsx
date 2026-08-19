@@ -76,7 +76,7 @@ export default function WelcomePopup() {
   }, [open]);
 
   const close = () => {
-    // 업데이트 공지를 닫으면 다시 뜸지 않도록 기록 (같은 주 인사 중복 방지도 함께)
+    // 업데이트 공지를 닫으면 다시 뜨지 않도록 기록 (같은 주 인사 중복 방지도 함께)
     if (mode === "update") {
       try {
         localStorage.setItem("what2eat-update-seen", UPDATE_VERSION);
