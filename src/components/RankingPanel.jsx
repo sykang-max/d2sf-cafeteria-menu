@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
-// 역대 최고 평점 메뉴 랭킹 (모달)
-//   누적 평균 점수(1~4) 상위 메뉴. 최소 표 수(RANKING_MIN_VOTES) 이상만 노출.
+// 역대 최고 평점 식단 랭킹 (모달)
+//   누적 평균 점수(1~4) 상위 식단. 최소 표 수(RANKING_MIN_VOTES) 이상만 노출.
 // ─────────────────────────────────────────────────────────────
 import React from "react";
 import { X, Trophy } from "lucide-react";
@@ -20,7 +20,7 @@ export default function RankingPanel({ open, onClose }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="역대 최고 평점 메뉴"
+      aria-label="역대 최고 평점 식단"
     >
       <div
         className="max-h-[80vh] w-full max-w-md overflow-hidden rounded-t-2xl bg-white sm:rounded-2xl"
@@ -29,7 +29,7 @@ export default function RankingPanel({ open, onClose }) {
       >
         <div className="flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.green }}>
           <h3 className="flex items-center gap-2 text-[16px] font-extrabold text-white">
-            <Trophy size={17} style={{ color: BRAND.yellow }} /> 역대 최고 평점 메뉴
+            <Trophy size={17} style={{ color: BRAND.yellow }} /> 역대 최고 평점 식단
           </h3>
           <button onClick={onClose} aria-label="닫기" className="rounded-lg p-1 text-white/90 transition-transform active:scale-90 hover:bg-white/15">
             <X size={18} />
@@ -43,7 +43,7 @@ export default function RankingPanel({ open, onClose }) {
                 {ready ? "아직 랭킹이 없어요 🍽️" : "불러오는 중…"}
               </p>
               <p className="mt-1 text-[12px] text-stone-400">
-                메뉴마다 이모지 평가가 {RANKING_MIN_VOTES}표 이상 쌓이면 여기 랭킹에 올라와요.
+                식단마다 이모지 평가가 {RANKING_MIN_VOTES}표 이상 쌓이면 여기 랭킹에 올라와요.
               </p>
             </div>
           ) : (
