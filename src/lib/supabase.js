@@ -10,8 +10,13 @@
 // ─────────────────────────────────────────────────────────────
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+// 기본값(공개 키). anon/publishable 키는 브라우저 노출 전제의 공개 키이며 실제 권한은
+// RLS 가 통제하므로 커밋해도 안전합니다. Vercel 등에 VITE_ 환경변수를 넣으면 그 값이 우선.
+const DEFAULT_SUPABASE_URL = "https://vaarrrzjaucxbhavrumw.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_ELTlZY2iJJuj4f3NkIL5zQ_VyPPoUpD";
+
+const url = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || DEFAULT_SUPABASE_ANON_KEY;
 
 /** URL/anon key 가 모두 채워져 있어야 커뮤니티 기능을 켭니다. */
 export const isSupabaseConfigured = Boolean(url && anonKey);
