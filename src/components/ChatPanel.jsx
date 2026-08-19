@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────
 // D2SF Chat (실시간 채팅 패널)
 //   4개 카드(탭)로 구성: 💬 자유대화 · 🍜 맛집리스트 · 🤝 밍글링 · 📮 주인장께 톡톡.
-//   맛집리스트(워크인/배달)·밍글링(이벤트명/시간/장소/인원)은 구조화 카드 폼,
-//   자유대화·주인장께 톡톡은 자유 텍스트.
+//   맛집리스트/밍글링은 구조화 카드 폼 + 공통 자유대화 입력창을 함께 제공,
+//   자유대화·주인장께 톡톡은 텍스트 입력창만.
 //   익명 닉네임 + 선택 소속 배지. 본인 메시지는 삭제 가능.
 // ─────────────────────────────────────────────────────────────
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -14,8 +14,8 @@ import { BRAND } from "../theme.js";
 // 탭(카드) 정의 — id 는 메시지 kind 와 1:1. rec/mingle 탭은 구조화 폼을 씁니다.
 const TABS = [
   { id: "chat", label: "자유대화", emoji: "💬", placeholder: "메시지 보내기…", empty: "첫 메시지를 남겨보세요 👋" },
-  { id: "rec", label: "맛집리스트", emoji: "🍜", placeholder: "", empty: "아직 맛집 추천이 없어요 🍜" },
-  { id: "mingle", label: "밍글링", emoji: "🤝", placeholder: "", empty: "함께할 소모임을 제안해보세요 🤝" },
+  { id: "rec", label: "맛집리스트", emoji: "🍜", placeholder: "맛집 얘기 자유롭게 나누기…", empty: "아직 맛집 추천이 없어요 🍜" },
+  { id: "mingle", label: "밍글링", emoji: "🤝", placeholder: "소모임 얘기 자유롭게 나누기…", empty: "함께할 소모임을 제안해보세요 🤝" },
   { id: "owner", label: "주인장께 톡톡", emoji: "📮", placeholder: "주인장에게 전할 말 (건의·문의·감사 등)", empty: "주인장에게 하고 싶은 말을 남겨보세요 📮" },
 ];
 
@@ -208,7 +208,7 @@ export default function ChatPanel({ onClose }) {
                       <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-semibold text-stone-400">{dayLabel(m.created_at)}</span>
                     </div>
                   )}
-                  {m.kind === "rec" ? (
+                  {m.kind === "rec" && m.rec_place ? (
                     <RecCard m={m} mine={mine} onDelete={remove} />
                   ) : m.kind === "mingle" && m.mingle_title ? (
                     <MingleCard m={m} mine={mine} onDelete={remove} />
@@ -221,8 +221,8 @@ export default function ChatPanel({ onClose }) {
           )}
         </div>
 
-        {/* 입력부 — 맛집리스트/밍글링은 구조화 폼, 나머지는 텍스트 */}
-        {isRec ? (
+        {/* 구조화 폼 (맛집리스트/밍글링) — 아래 공통 입력창과 함께 노출 */}
+        {isRec && (
           <div className="space-y-1.5 border-t border-stone-100 bg-stone-50/70 px-3 py-2.5">
             <div className="flex items-center gap-1.5">
               <UtensilsCrossed size={14} style={{ color: BRAND.green }} />
@@ -246,7 +246,8 @@ export default function ChatPanel({ onClose }) {
               <button onClick={submitRec} disabled={!rec.place.trim()} className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40" style={{ backgroundColor: BRAND.green }}>등록</button>
             </div>
           </div>
-        ) : isMingle ? (
+        )}
+        {isMingle && (
           <div className="space-y-1.5 border-t border-stone-100 bg-stone-50/70 px-3 py-2.5">
             <div className="flex items-center gap-1.5">
               <Users2 size={14} style={{ color: BRAND.green }} />
@@ -268,14 +269,15 @@ export default function ChatPanel({ onClose }) {
               <button onClick={submitMingle} disabled={!mingle.title.trim()} className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40" style={{ backgroundColor: BRAND.green }}>열기</button>
             </div>
           </div>
-        ) : (
-          <div className="flex items-center gap-1.5 border-t border-stone-100 bg-white px-3 py-2.5">
-            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitChat(); } }}
-              maxLength={500} placeholder={active.placeholder} className="min-w-0 flex-1 rounded-full border border-stone-200 px-3.5 py-2 text-[14px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
-            <button onClick={submitChat} disabled={!text.trim()} aria-label="보내기"
-              className="shrink-0 rounded-full p-2.5 text-white transition-transform active:scale-90 disabled:opacity-40" style={{ backgroundColor: BRAND.green }}><Send size={16} /></button>
-          </div>
         )}
+
+        {/* 공통 채팅 입력창 (모든 탭) */}
+        <div className="flex items-center gap-1.5 border-t border-stone-100 bg-white px-3 py-2.5">
+          <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitChat(); } }}
+            maxLength={500} placeholder={active.placeholder} className="min-w-0 flex-1 rounded-full border border-stone-200 px-3.5 py-2 text-[14px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
+          <button onClick={submitChat} disabled={!text.trim()} aria-label="보내기"
+            className="shrink-0 rounded-full p-2.5 text-white transition-transform active:scale-90 disabled:opacity-40" style={{ backgroundColor: BRAND.green }}><Send size={16} /></button>
+        </div>
       </div>
     </div>
   );

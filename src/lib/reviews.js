@@ -13,8 +13,8 @@ export const EMOJIS = [
 export const EMOJI_BY_KEY = Object.fromEntries(EMOJIS.map((e) => [e.key, e]));
 export const EMOJI_KEYS = EMOJIS.map((e) => e.key);
 
-// 랭킹에 노출되기 위한 최소 표 수 (표본이 너무 적은 메뉴가 1위로 튀는 것 방지).
-export const RANKING_MIN_VOTES = 3;
+// 랭킹에 노출되기 위한 최소 표 수 (1표만 받아도 랭킹에 올라옵니다).
+export const RANKING_MIN_VOTES = 1;
 
 /**
  * 메뉴 이름 정규화 — 주가 바뀌어도 같은 메뉴로 누적되도록 키를 통일.
