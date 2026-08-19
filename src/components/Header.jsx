@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles, MessageCircle } from "lucide-react";
 import { BRAND } from "../theme.js";
 import { isCurrentWeek } from "../lib/weekDates.js";
 
@@ -8,7 +8,7 @@ import { isCurrentWeek } from "../lib/weekDates.js";
  * 로고(회색 PNG)는 그린 바 위에서 잘 보이도록 흰색 pill 안에 넣습니다.
  * 주차가 2개 이상이면 드롭다운, 1개면 주차 라벨만 노출. 모바일/데스크탑 반응형.
  */
-export default function Header({ weeks, weekId, onWeekChange }) {
+export default function Header({ weeks, weekId, onWeekChange, chatEnabled = false, onOpenChat }) {
   const current = weeks.find((w) => w.id === weekId) ?? weeks[0];
   const multiple = weeks.length > 1;
 
@@ -54,6 +54,17 @@ export default function Header({ weeks, weekId, onWeekChange }) {
             </div>
           ) : (
             <span className="rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-bold text-white ring-1 ring-white/30">{current.label}</span>
+          )}
+
+          {chatEnabled && (
+            <button
+              onClick={onOpenChat}
+              aria-label="Chat 열기"
+              className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-bold text-white ring-1 ring-white/30 transition-colors hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+              style={{ outlineColor: "#fff" }}
+            >
+              <MessageCircle size={15} /> Chat
+            </button>
           )}
         </div>
       </div>
