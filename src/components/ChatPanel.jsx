@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// 지하식당 Chat (실시간 채팅 패널)
+// D2SF Chat (실시간 채팅 패널)
 //   자유 대화 + 맛집 추천 카드(🚶 워크인 / 🛵 배달). 상단 필터로 맛집만 모아보기.
 //   익명 닉네임 + 선택 소속 배지. 본인 메시지는 삭제 가능.
 // ─────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ export default function ChatPanel({ onClose }) {
   const saveId = () => { updateIdentity(draft); setEditId(false); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-stretch sm:justify-end" onClick={onClose} role="dialog" aria-modal="true" aria-label="지하식당 Chat">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-stretch sm:justify-end" onClick={onClose} role="dialog" aria-modal="true" aria-label="D2SF Chat">
       <div
         className="flex h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white sm:h-full sm:max-w-sm sm:rounded-none"
         style={{ boxShadow: "0 20px 60px -12px rgba(0,0,0,0.35)", fontFamily: "'Pretendard Variable', Pretendard, system-ui, sans-serif" }}
@@ -102,7 +102,7 @@ export default function ChatPanel({ onClose }) {
         {/* 헤더 */}
         <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: BRAND.green }}>
           <div>
-            <h3 className="text-[15px] font-extrabold text-white">💬 지하식당 Chat</h3>
+            <h3 className="text-[15px] font-extrabold text-white">💬 D2SF Chat</h3>
             <p className="text-[11px] text-white/80">점심 직전 실시간 · 익명</p>
           </div>
           <button onClick={onClose} aria-label="닫기" className="rounded-lg p-1 text-white/90 transition-transform active:scale-90 hover:bg-white/15"><X size={18} /></button>
