@@ -10,7 +10,7 @@ import { loadIdentity, saveIdentity } from "../lib/nickname.js";
 
 const ChatContext = createContext(null);
 
-// 밍글링 컴럼(mingle_*)이 아직 없는 DB(마이그레이션 전)에서도 기존 메시지가 보이도록
+// 밍글링 컬럼(mingle_*)이 아직 없는 DB(마이그레이션 전)에서도 기존 메시지가 보이도록
 // 로드는 FULL → 실패 시 BASE 로 폴백합니다. insert 반환은 항상 BASE(안전).
 const SELECT_BASE = "id, user_id, nickname, affiliation, kind, body, rec_place, rec_category, rec_link, created_at";
 const SELECT_FULL = SELECT_BASE + ", mingle_title, mingle_when, mingle_where, mingle_cap";
@@ -41,7 +41,7 @@ export function ChatProvider({ children }) {
         .order("created_at", { ascending: true })
         .limit(LIMIT);
       if (error) {
-        // mingle_* 컴럼이 없는 구버전 DB — 기본 컴럼만으로 다시 로드
+        // mingle_* 컬럼이 없는 구버전 DB — 기본 컬럼만으로 다시 로드
         const res = await supabase
           .from("chat_messages")
           .select(SELECT_BASE)
@@ -56,7 +56,7 @@ export function ChatProvider({ children }) {
       channel = supabase
         .channel("chat_messages_live")
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
-          // 낙관적으로 먼저 넣은 행(기본 컴럼)을 Realtime 의 완전한 행으로 교체하거나 새로 추가.
+          // 낙관적으로 먼저 넣은 행(기본 컬럼)을 Realtime 의 완전한 행으로 교체하거나 새로 추가.
           setMessages((prev) => {
             const i = prev.findIndex((m) => m.id === payload.new.id);
             if (i === -1) return [...prev, payload.new];
@@ -81,7 +81,7 @@ export function ChatProvider({ children }) {
     setIdentity(saveIdentity(next));
   }, []);
 
-  // 공통 전송. row 에 정체성/유저 붙여 insert. 반환은 기본 컴럼만 받아(구버전 DB 안전)
+  // 공통 전송. row 에 정체성/유저 붙여 insert. 반환은 기본 컬럼만 받아(구버전 DB 안전)
   // 즉시 반영하고, 구조화 필드(mingle_*)는 Realtime 완전한 행으로 교체됩니다.
   const insertRow = useCallback(async (row) => {
     if (!supabase) return { error: "not-ready" };

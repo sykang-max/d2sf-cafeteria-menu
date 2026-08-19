@@ -33,7 +33,7 @@ alter table public.chat_messages drop constraint if exists chat_messages_kind_ch
 alter table public.chat_messages
   add constraint chat_messages_kind_check check (kind in ('chat', 'rec', 'mingle', 'owner'));
 
--- ── 밍글링 구조화 컴럼 ── (기존 테이블에 이벤트명/시간/장소/인원 추가)
+-- ── 밍글링 구조화 컬럼 ── (기존 테이블에 이벤트명/시간/장소/인원 추가)
 alter table public.chat_messages add column if not exists mingle_title text;
 alter table public.chat_messages add column if not exists mingle_when  text;
 alter table public.chat_messages add column if not exists mingle_where text;
