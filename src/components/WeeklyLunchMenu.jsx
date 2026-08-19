@@ -9,7 +9,7 @@ import { useReviews } from "../context/ReviewsContext.jsx";
 /**
  * 카페테리아 주간 메뉴 (프레젠테이션 컴포넌트)
  * 주차 데이터는 `week` prop으로 주입받습니다 — { id, label, range, days, sets, staticTakeout }.
- * 로직·레이아웃은 원본 그대로 유지하고, 팔레트만 써브웨이 그린·옆로우 체계로 재배색.
+ * 로직·레이아웃은 원본 그대로 유지하고, 팔레트만 써브웨이 그린·였로우 체계로 재배색.
  */
 
 const sum = (items) => items.reduce((s, [, k]) => s + k, 0);
