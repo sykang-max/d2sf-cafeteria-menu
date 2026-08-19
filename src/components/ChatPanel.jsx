@@ -181,12 +181,17 @@ export default function ChatPanel({ onClose }) {
           )}
         </div>
 
-        {/* 탭(카드) */}
-        <div className="flex gap-1.5 overflow-x-auto border-b border-stone-100 px-3 py-2">
+        {/* 탭(카드) — 기본 너비를 4등분해 한 줄에 배치(가로 스크롤 없음) */}
+        <div className="grid grid-cols-4 gap-1 border-b border-stone-100 px-3 py-2">
           {TABS.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} className="shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-bold transition-colors"
-              style={tab === t.id ? { backgroundColor: BRAND.greenSoft, color: BRAND.greenDark } : { color: "#78716c" }}>
-              {t.emoji} {t.label}
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="flex min-w-0 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-[10.5px] font-bold leading-none transition-colors"
+              style={tab === t.id ? { backgroundColor: BRAND.greenSoft, color: BRAND.greenDark } : { color: "#78716c" }}
+            >
+              <span className="text-[15px] leading-none">{t.emoji}</span>
+              <span className="whitespace-nowrap">{t.label}</span>
             </button>
           ))}
         </div>
