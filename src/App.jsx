@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import Header from "./components/Header.jsx";
 import WeeklyLunchMenu from "./components/WeeklyLunchMenu.jsx";
 import WelcomePopup from "./components/WelcomePopup.jsx";
+import { ReviewsProvider } from "./context/ReviewsContext.jsx";
 import { weeks } from "./data/index.js";
 import { defaultWeekId, weekRelation } from "./lib/weekDates.js";
 
@@ -14,13 +15,15 @@ export default function App() {
   const relation = useMemo(() => weekRelation(week, weeks), [week]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <WelcomePopup />
-      <Header weeks={weeks} weekId={weekId} onWeekChange={setWeekId} />
-      <main>
-        <WeeklyLunchMenu week={week} relation={relation} />
-      </main>
-      <Analytics />
-    </div>
+    <ReviewsProvider>
+      <div className="min-h-screen bg-white">
+        <WelcomePopup />
+        <Header weeks={weeks} weekId={weekId} onWeekChange={setWeekId} />
+        <main>
+          <WeeklyLunchMenu week={week} relation={relation} />
+        </main>
+        <Analytics />
+      </div>
+    </ReviewsProvider>
   );
 }
