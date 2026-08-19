@@ -1,20 +1,21 @@
 // ─────────────────────────────────────────────────────────────
 // D2SF Chat (실시간 채팅 패널)
 //   4개 카드(탭)로 구성: 💬 자유대화 · 🍜 맛집리스트 · 🤝 밍글링 · 📮 주인장께 톡톡.
-//   맛집리스트는 워크인/배달 추천 카드 폼, 나머지는 자유 텍스트.
+//   맛집리스트(워크인/배달)·밍글링(이벤트명/시간/장소/인원)은 구조화 카드 폼,
+//   자유대화·주인장께 톡톡은 자유 텍스트.
 //   익명 닉네임 + 선택 소속 배지. 본인 메시지는 삭제 가능.
 // ─────────────────────────────────────────────────────────────
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { X, Send, Dices, Trash2, Footprints, Bike, UtensilsCrossed, Link2, Check } from "lucide-react";
+import { X, Send, Dices, Trash2, Footprints, Bike, UtensilsCrossed, Link2, Check, Users2, Clock, MapPin, Users } from "lucide-react";
 import { useChat } from "../context/ChatContext.jsx";
 import { randomNickname } from "../lib/nickname.js";
 import { BRAND } from "../theme.js";
 
-// 탭(카드) 정의 — id 는 메시지 kind 와 1:1. rec 탭만 맛집 추천 폼을 씁니다.
+// 탭(카드) 정의 — id 는 메시지 kind 와 1:1. rec/mingle 탭은 구조화 폼을 씁니다.
 const TABS = [
   { id: "chat", label: "자유대화", emoji: "💬", placeholder: "메시지 보내기…", empty: "첫 메시지를 남겨보세요 👋" },
   { id: "rec", label: "맛집리스트", emoji: "🍜", placeholder: "", empty: "아직 맛집 추천이 없어요 🍜" },
-  { id: "mingle", label: "밍글링", emoji: "🤝", placeholder: "소모임을 제안해보세요 (예: 목요일 러닝 같이 하실 분?)", empty: "함께할 소모임을 제안해보세요 🤝" },
+  { id: "mingle", label: "밍글링", emoji: "🤝", placeholder: "", empty: "함께할 소모임을 제안해보세요 🤝" },
   { id: "owner", label: "주인장께 톡톡", emoji: "📮", placeholder: "주인장에게 전할 말 (건의·문의·감사 등)", empty: "주인장에게 하고 싶은 말을 남겨보세요 📮" },
 ];
 
@@ -55,6 +56,40 @@ function RecCard({ m, mine, onDelete }) {
   );
 }
 
+function MingleCard({ m, mine, onDelete }) {
+  const rows = [
+    m.mingle_when && { Icon: Clock, text: m.mingle_when },
+    m.mingle_where && { Icon: MapPin, text: m.mingle_where },
+    m.mingle_cap && { Icon: Users, text: m.mingle_cap },
+  ].filter(Boolean);
+  return (
+    <div className="rounded-2xl border p-3" style={{ borderColor: BRAND.greenSoft, backgroundColor: "#fff", boxShadow: "0 2px 10px -6px rgba(0,140,21,0.25)" }}>
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-white" style={{ backgroundColor: BRAND.green }}>
+          <Users2 size={12} /> 밍글링
+        </span>
+        <span className="text-[14px] font-extrabold text-stone-900">{m.mingle_title}</span>
+      </div>
+      {rows.length > 0 && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {rows.map(({ Icon, text }, i) => (
+            <span key={i} className="inline-flex items-center gap-1 text-[12.5px] text-stone-600">
+              <Icon size={13} style={{ color: BRAND.green }} /> {text}
+            </span>
+          ))}
+        </div>
+      )}
+      {m.body && <p className="mt-1 text-[13px] leading-snug text-stone-600">{m.body}</p>}
+      <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-stone-400">
+        <span className="font-bold text-stone-500">{m.nickname}</span>
+        <AffBadge text={m.affiliation} />
+        <span>· {timeLabel(m.created_at)}</span>
+        {mine && <button onClick={() => onDelete(m.id)} className="ml-auto text-stone-300 hover:text-red-400" aria-label="삭제"><Trash2 size={12} /></button>}
+      </div>
+    </div>
+  );
+}
+
 function ChatBubble({ m, mine, onDelete }) {
   return (
     <div className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
@@ -75,16 +110,18 @@ function ChatBubble({ m, mine, onDelete }) {
 }
 
 export default function ChatPanel({ onClose }) {
-  const { ready, userId, messages, identity, updateIdentity, sendChat, sendRec, remove } = useChat();
+  const { ready, userId, messages, identity, updateIdentity, sendChat, sendRec, sendMingle, remove } = useChat();
   const [tab, setTab] = useState("chat"); // 'chat' | 'rec' | 'mingle' | 'owner'
   const [text, setText] = useState("");
   const [rec, setRec] = useState({ place: "", category: "walk", note: "", link: "" });
+  const [mingle, setMingle] = useState({ title: "", when: "", where: "", cap: "", note: "" });
   const [editId, setEditId] = useState(false);
   const [draft, setDraft] = useState({ nickname: identity.nickname, affiliation: identity.affiliation });
   const feedRef = useRef(null);
 
   const active = TABS.find((t) => t.id === tab) ?? TABS[0];
   const isRec = tab === "rec";
+  const isMingle = tab === "mingle";
   const shown = useMemo(() => messages.filter((m) => m.kind === tab), [messages, tab]);
 
   // 탭 전환/새 메시지 시 맨 아래로 스크롤
@@ -98,6 +135,11 @@ export default function ChatPanel({ onClose }) {
     if (!rec.place.trim()) return;
     sendRec(rec);
     setRec({ place: "", category: "walk", note: "", link: "" });
+  };
+  const submitMingle = () => {
+    if (!mingle.title.trim()) return;
+    sendMingle(mingle);
+    setMingle({ title: "", when: "", where: "", cap: "", note: "" });
   };
   const saveId = () => { updateIdentity(draft); setEditId(false); };
 
@@ -169,14 +211,20 @@ export default function ChatPanel({ onClose }) {
                       <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-semibold text-stone-400">{dayLabel(m.created_at)}</span>
                     </div>
                   )}
-                  {m.kind === "rec" ? <RecCard m={m} mine={mine} onDelete={remove} /> : <ChatBubble m={m} mine={mine} onDelete={remove} />}
+                  {m.kind === "rec" ? (
+                    <RecCard m={m} mine={mine} onDelete={remove} />
+                  ) : m.kind === "mingle" && m.mingle_title ? (
+                    <MingleCard m={m} mine={mine} onDelete={remove} />
+                  ) : (
+                    <ChatBubble m={m} mine={mine} onDelete={remove} />
+                  )}
                 </div>
               );
             })
           )}
         </div>
 
-        {/* 입력부 — 맛집리스트 탭은 추천 폼, 나머지는 텍스트 */}
+        {/* 입력부 — 맛집리스트/밍글링은 구조화 폼, 나머지는 텍스트 */}
         {isRec ? (
           <div className="space-y-1.5 border-t border-stone-100 bg-stone-50/70 px-3 py-2.5">
             <div className="flex items-center gap-1.5">
@@ -199,6 +247,28 @@ export default function ChatPanel({ onClose }) {
               <input value={rec.link} onChange={(e) => setRec((r) => ({ ...r, link: e.target.value }))} maxLength={300} placeholder="링크 (선택) — 지도/배달앱"
                 className="min-w-0 flex-1 rounded-lg border border-stone-200 px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
               <button onClick={submitRec} disabled={!rec.place.trim()} className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40" style={{ backgroundColor: BRAND.green }}>등록</button>
+            </div>
+          </div>
+        ) : isMingle ? (
+          <div className="space-y-1.5 border-t border-stone-100 bg-stone-50/70 px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <Users2 size={14} style={{ color: BRAND.green }} />
+              <span className="text-[12px] font-extrabold text-stone-700">소모임 열기</span>
+            </div>
+            <input value={mingle.title} onChange={(e) => setMingle((r) => ({ ...r, title: e.target.value }))} maxLength={60} placeholder="이벤트명 (필수) — 예: 목요일 점심 러닝크루"
+              className="w-full rounded-lg border border-stone-200 px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
+            <div className="flex gap-1.5">
+              <input value={mingle.when} onChange={(e) => setMingle((r) => ({ ...r, when: e.target.value }))} maxLength={60} placeholder="시간 — 예: 목 12:30"
+                className="min-w-0 flex-1 rounded-lg border border-stone-200 px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
+              <input value={mingle.cap} onChange={(e) => setMingle((r) => ({ ...r, cap: e.target.value }))} maxLength={30} placeholder="인원 — 예: 4명"
+                className="w-24 shrink-0 rounded-lg border border-stone-200 px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
+            </div>
+            <input value={mingle.where} onChange={(e) => setMingle((r) => ({ ...r, where: e.target.value }))} maxLength={60} placeholder="장소 — 예: 지하 1층 로비"
+              className="w-full rounded-lg border border-stone-200 px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
+            <div className="flex gap-1.5">
+              <input value={mingle.note} onChange={(e) => setMingle((r) => ({ ...r, note: e.target.value }))} maxLength={140} placeholder="설명 (선택) — 준비물·참여 방법 등"
+                className="min-w-0 flex-1 rounded-lg border border-stone-200 px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--g)]" style={{ "--g": BRAND.green }} />
+              <button onClick={submitMingle} disabled={!mingle.title.trim()} className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40" style={{ backgroundColor: BRAND.green }}>열기</button>
             </div>
           </div>
         ) : (
