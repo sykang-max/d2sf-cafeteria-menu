@@ -103,12 +103,13 @@ export function ChatProvider({ children }) {
     return { ok: true };
   }, []);
 
-  // 자유대화/주인장께 톡톡은 텍스트 메시지 — kind 로 탭(카드)을 구분합니다.
+  // 모든 탭에서 자유 텍스트 전송 가능 — kind 로 탭(카드)을 구분합니다.
+  // 맛집리스트/밍글링 탭에 남긴 일반 텍스트는 구조화 필드가 없어 말풍선으로 표시됩니다.
   const sendChat = useCallback(
     (text, kind = "chat") => {
       const body = (text || "").trim().slice(0, 500);
       if (!body) return Promise.resolve({ error: "empty" });
-      const k = ["chat", "owner"].includes(kind) ? kind : "chat";
+      const k = ["chat", "rec", "mingle", "owner"].includes(kind) ? kind : "chat";
       return insertRow({ kind: k, body });
     },
     [insertRow]
