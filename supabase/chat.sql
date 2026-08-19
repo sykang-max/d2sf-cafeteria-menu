@@ -39,6 +39,13 @@ create policy "chat delete own" on public.chat_messages
 -- ── 권한(anon = 미로그인, authenticated = 익명 로그인 포함) ──
 grant select, insert, delete on public.chat_messages to anon, authenticated;
 
--- ── Realtime ──
--- (이미 추가돼 있으면 에러가 날 수 있으니 그때는 이 줄만 건너뛰세요.)
-alter publication supabase_realtime add table public.chat_messages;
+-- ── Realtime ── (이미 등록돼 있어도 에러 없이 넘어가도록 가드)
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'chat_messages'
+  ) then
+    alter publication supabase_realtime add table public.chat_messages;
+  end if;
+end $$;
