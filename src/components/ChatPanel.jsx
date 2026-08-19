@@ -152,10 +152,7 @@ export default function ChatPanel({ onClose }) {
       >
         {/* 헤더 */}
         <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: BRAND.green }}>
-          <div>
-            <h3 className="text-[15px] font-extrabold text-white">💬 D2SF Chat</h3>
-            <p className="text-[11px] text-white/80">점심 직전 실시간 · 익명</p>
-          </div>
+          <h3 className="text-[15px] font-extrabold text-white">💬 D2SF Chat</h3>
           <button onClick={onClose} aria-label="닫기" className="rounded-lg p-1 text-white/90 transition-transform active:scale-90 hover:bg-white/15"><X size={18} /></button>
         </div>
 
