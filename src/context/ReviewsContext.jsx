@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured, ensureAnonSession } from "../lib/supabase.js";
-import { EMOJI_BY_KEY, normalizeDish, toRanking } from "../lib/reviews.js";
+import { EMOJI_BY_KEY, normalizeDish, toRanking, num } from "../lib/reviews.js";
 
 const ReviewsContext = createContext(null);
 
@@ -133,10 +133,10 @@ export function ReviewsProvider({ children }) {
       const i = raw.indexOf(" · ");
       const dish = normalizeDish(i >= 0 ? raw.slice(i + 3) : raw);
       const m = merged[dish] || (merged[dish] = { dish, fire: 0, up: 0, meh: 0, skull: 0 });
-      m.fire += s.fire || 0;
-      m.up += s.up || 0;
-      m.meh += s.meh || 0;
-      m.skull += s.skull || 0;
+      m.fire += num(s.fire);
+      m.up += num(s.up);
+      m.meh += num(s.meh);
+      m.skull += num(s.skull);
     }
     return merged;
   }, [statsByDish]);

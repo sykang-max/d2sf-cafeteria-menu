@@ -5,7 +5,7 @@
 // Supabase 미설정 시 아무것도 렌더하지 않습니다.
 // ─────────────────────────────────────────────────────────────
 import React, { useState, useCallback } from "react";
-import { EMOJIS, dominantEmoji, totalVotes, avgLabel } from "../lib/reviews.js";
+import { EMOJIS, dominantEmoji, totalVotes, avgLabel, num } from "../lib/reviews.js";
 import { useReviews } from "../context/ReviewsContext.jsx";
 import { BRAND } from "../theme.js";
 
@@ -96,7 +96,7 @@ export default function ItemReview({ dish }) {
           <div className="flex gap-1">
             {EMOJIS.map((e) => {
               const mine = myKey === e.key;
-              const c = stat?.[e.key] || 0;
+              const c = num(stat?.[e.key]);
               return (
                 <button
                   key={e.key}

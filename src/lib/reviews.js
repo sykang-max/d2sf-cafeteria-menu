@@ -22,17 +22,21 @@ export const RANKING_MIN_VOTES = 1;
  */
 export const normalizeDish = (name) => String(name ?? "").trim().replace(/\s+/g, " ");
 
+// 카운트 안전 변환 — PostgREST 가 bigint(count)를 문자열로 줄 수 있어(예: "2")
+// 문자열 이어붙이기 버그가 나지 않도록 항상 숫자로 강제합니다.
+export const num = (v) => Number(v) || 0;
+
 /** 통계 행 → 총 표 수 */
 export const totalVotes = (stat) =>
-  stat ? EMOJI_KEYS.reduce((s, k) => s + (stat[k] || 0), 0) : 0;
+  stat ? EMOJI_KEYS.reduce((s, k) => s + num(stat[k]), 0) : 0;
 
 /** 통계 행 → 가장 많이 받은 이모지({key,char,...}) 또는 null */
 export const dominantEmoji = (stat) => {
   if (!stat) return null;
   let best = null;
   for (const e of EMOJIS) {
-    const c = stat[e.key] || 0;
-    if (c > 0 && (!best || c > (stat[best.key] || 0))) best = e;
+    const c = num(stat[e.key]);
+    if (c > 0 && (!best || c > num(stat[best.key]))) best = e;
   }
   return best;
 };
@@ -41,7 +45,7 @@ export const dominantEmoji = (stat) => {
 export const avgLabel = (stat) => {
   const n = totalVotes(stat);
   if (!n) return "-";
-  const sum = EMOJIS.reduce((s, e) => s + (stat[e.key] || 0) * e.score, 0);
+  const sum = EMOJIS.reduce((s, e) => s + num(stat[e.key]) * e.score, 0);
   return (sum / n).toFixed(1);
 };
 
