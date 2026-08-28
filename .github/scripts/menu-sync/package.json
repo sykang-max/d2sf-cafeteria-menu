@@ -1,0 +1,11 @@
+{
+  "name": "menu-sync",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Google Drive 식단 이미지를 Claude(Sonnet)로 판독해 주차 데이터 파일을 생성",
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "googleapis": "latest"
+  }
+}
