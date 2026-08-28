@@ -1,0 +1,71 @@
+name: 식단 자동 업데이트
+
+# 구글 드라이브 폴더를 주기적으로 확인해, 새 식단 이미지가 있으면
+# Claude(Sonnet)로 판독 → 주차 데이터 파일 생성 → PR 을 올립니다.
+# (자동 병합하지 않습니다. 사람이 PR 을 확인·수정 후 머지하세요.)
+
+on:
+  schedule:
+    # UTC 기준. 일/수 23:00 UTC = 월/목 08:00 KST.
+    - cron: "0 23 * * 0,3"
+  workflow_dispatch: {} # 수동 실행(테스트) 가능
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: menu-auto-update
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 동기화 스크립트 의존성 설치
+        run: npm install --no-audit --no-fund
+        working-directory: .github/scripts/menu-sync
+
+      - name: 드라이브 확인 + 식단 판독
+        id: sync
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GDRIVE_SA_KEY: ${{ secrets.GDRIVE_SA_KEY }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/menu-sync/sync.mjs
+
+      - name: 앱 의존성 설치 + 빌드 검증
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+      - name: PR 생성/갱신
+        if: steps.sync.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ${{ steps.sync.outputs.branch }}
+          base: main
+          title: "식단 자동 추가: ${{ steps.sync.outputs.label }}"
+          commit-message: "식단 자동 추가: ${{ steps.sync.outputs.label }} (${{ steps.sync.outputs.week_id }})"
+          add-paths: |
+            src/data/menu-2026-*.js
+            src/data/index.js
+            .github/menu-sync/processed.json
+          body: |
+            🤖 구글 드라이브 새 식단 이미지를 Claude(Sonnet)로 판독해 자동 생성한 PR 입니다.
+
+            - 원본 파일: `${{ steps.sync.outputs.source }}`
+            - 주차: **${{ steps.sync.outputs.label }}** (`${{ steps.sync.outputs.week_id }}`)
+
+            ⚠️ **자동 판독이므로 병합 전 반드시 원문 이미지와 대조**해 주세요.
+            (kcal 은 추정치, 작은 글씨/사이드 항목은 오탈자 가능. `(판독불가)` 표기가 있으면 채워 주세요.)
