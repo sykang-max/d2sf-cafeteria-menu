@@ -32,7 +32,7 @@ function done(changed, extra = {}) {
   process.exit(0);
 }
 
-const { ANTHROPIC_API_KEY, GDRIVE_SA_KEY, GDRIVE_FOLDER_ID, GITHUB_TOKEN, GITHUB_REPOSITORY } = process.env;
+const { ANTHROPIC_API_KEY, GDRIVE_SA_KEY, GDRIVE_FOLDER_ID } = process.env;
 
 // ── 0) 시크릿 없으면 조용히 종료(실패 메일 방지). 설정 전까지 워크플로우는 휴면 상태. ──
 if (!ANTHROPIC_API_KEY || !GDRIVE_SA_KEY || !GDRIVE_FOLDER_ID) {
@@ -67,25 +67,12 @@ if (processed.includes(newest.id)) {
   done(false);
 }
 
-// ── 3) 열린 PR 브랜치가 있으면 종료(중복 PR·API 비용 방지) ──
-const shortId = newest.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12);
-const branch = `auto/menu-${shortId}`;
-if (GITHUB_TOKEN && GITHUB_REPOSITORY) {
-  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPOSITORY}/branches/${branch}`, {
-    headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json" },
-  });
-  if (res.status === 200) {
-    console.log(`이미 열린 PR 브랜치(${branch})가 있습니다 → 종료.`);
-    done(false);
-  }
-}
-
-// ── 4) 이미지 다운로드 ──
+// ── 3) 이미지 다운로드 ──
 const media = await drive.files.get({ fileId: newest.id, alt: "media" }, { responseType: "arraybuffer" });
 const b64 = Buffer.from(media.data).toString("base64");
 const mediaType = newest.mimeType?.startsWith("image/") ? newest.mimeType : "image/png";
 
-// ── 5) Claude Sonnet 비전 판독 ──
+// ── 4) Claude Sonnet 비전 판독 ──
 const client = new Anthropic(); // ANTHROPIC_API_KEY 자동 사용
 const msg = await client.messages.create({
   model: "claude-sonnet-5",
@@ -115,11 +102,11 @@ if (!week || !Array.isArray(week.sets) || !Array.isArray(week.days) || week.sets
   process.exit(1);
 }
 
-// ── 6) 요일 라벨 재계산(원문 오타 보정) ──
+// ── 5) 요일 라벨 재계산(원문 오타 보정) ──
 const yearGuess = week.range?.match(/^(\d{4})/)?.[1] || String(new Date().getFullYear());
 week.days = fixWeekdays(week.days, yearGuess);
 
-// ── 7) 다음 주차 id 계산 + 중복(기간) 검사 ──
+// ── 6) 다음 주차 id 계산 + 중복(기간) 검사 ──
 const existing = fs.readdirSync(DATA_DIR).filter((f) => /^menu-2026-w\d+\.js$/.test(f));
 let maxN = 0;
 let dup = false;
@@ -136,7 +123,7 @@ if (dup) {
 const nextN = maxN + 1;
 week.id = `2026-w${nextN}`;
 
-// ── 8) 파일 렌더 + 인덱스 등록 + 이력 기록 ──
+// ── 7) 파일 렌더 + 인덱스 등록 + 이력 기록 ──
 fs.writeFileSync(path.join(DATA_DIR, `menu-2026-w${nextN}.js`), renderWeekModule(week), "utf8");
 updateIndex(DATA_DIR, nextN);
 processed.push(newest.id);
@@ -144,4 +131,4 @@ fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
 fs.writeFileSync(STATE_FILE, JSON.stringify(processed, null, 2) + "\n", "utf8");
 
 console.log(`생성: menu-2026-w${nextN}.js  (${week.label} · ${week.range})`);
-done(true, { branch, label: week.label || week.id, week_id: week.id, source: newest.name });
+done(true, { label: week.label || week.id, week_id: week.id, range: week.range || "", source: newest.name });

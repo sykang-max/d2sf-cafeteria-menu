@@ -1,18 +1,17 @@
 name: 식단 자동 업데이트
 
 # 구글 드라이브 폴더를 주기적으로 확인해, 새 식단 이미지가 있으면
-# Claude(Sonnet)로 판독 → 주차 데이터 파일 생성 → PR 을 올립니다.
-# (자동 병합하지 않습니다. 사람이 PR 을 확인·수정 후 머지하세요.)
+# Claude(Sonnet)로 판독 → 주차 데이터 파일 생성 → main 에 자동 반영 → Slack 알림.
 
 on:
   schedule:
-    # UTC 기준. 일/수 23:00 UTC = 월/목 08:00 KST.
-    - cron: "0 23 * * 0,3"
+    # 모두 한국시간(KST) 기준이며 cron 값은 UTC 로 적습니다 (KST = UTC+9).
+    - cron: "0 2 * * 1" # 월 11:00 KST (월 02:00 UTC)
+    - cron: "0 9 * * 4" # 목 18:00 KST (목 09:00 UTC)
   workflow_dispatch: {} # 수동 실행(테스트) 가능
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
   group: menu-auto-update
@@ -24,6 +23,8 @@ jobs:
     steps:
       - name: 체크아웃
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Node 설치
         uses: actions/setup-node@v4
@@ -40,7 +41,6 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GDRIVE_SA_KEY: ${{ secrets.GDRIVE_SA_KEY }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/menu-sync/sync.mjs
 
       - name: 앱 의존성 설치 + 빌드 검증
@@ -49,23 +49,27 @@ jobs:
           npm install --no-audit --no-fund
           npm run build
 
-      - name: PR 생성/갱신
+      - name: main 에 자동 반영(커밋·푸시)
+        id: commit
         if: steps.sync.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          branch: ${{ steps.sync.outputs.branch }}
-          base: main
-          title: "식단 자동 추가: ${{ steps.sync.outputs.label }}"
-          commit-message: "식단 자동 추가: ${{ steps.sync.outputs.label }} (${{ steps.sync.outputs.week_id }})"
-          add-paths: |
-            src/data/menu-2026-*.js
-            src/data/index.js
-            .github/menu-sync/processed.json
-          body: |
-            🤖 구글 드라이브 새 식단 이미지를 Claude(Sonnet)로 판독해 자동 생성한 PR 입니다.
+        run: |
+          git config user.name "menu-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/data/menu-2026-*.js src/data/index.js .github/menu-sync/processed.json
+          git commit -m "식단 자동 반영: ${{ steps.sync.outputs.label }} (${{ steps.sync.outputs.week_id }})"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-            - 원본 파일: `${{ steps.sync.outputs.source }}`
-            - 주차: **${{ steps.sync.outputs.label }}** (`${{ steps.sync.outputs.week_id }}`)
-
-            ⚠️ **자동 판독이므로 병합 전 반드시 원문 이미지와 대조**해 주세요.
-            (kcal 은 추정치, 작은 글씨/사이드 항목은 오탈자 가능. `(판독불가)` 표기가 있으면 채워 주세요.)
+      - name: Slack 알림(관리자 + 공지)
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ADMIN: ${{ secrets.SLACK_CHANNEL_ADMIN }}
+          SLACK_CHANNEL_NOTICE: ${{ secrets.SLACK_CHANNEL_NOTICE }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          MENU_LABEL: ${{ steps.sync.outputs.label }}
+          MENU_RANGE: ${{ steps.sync.outputs.range }}
+          MENU_SOURCE: ${{ steps.sync.outputs.source }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.commit.outputs.sha }}
+        run: node .github/scripts/menu-sync/notify.mjs
