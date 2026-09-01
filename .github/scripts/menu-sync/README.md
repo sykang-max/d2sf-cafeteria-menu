@@ -12,7 +12,8 @@ GitHub Actions cron (월 11:00 · 목 18:00 KST)
   → 이미 처리한 파일이면 종료 (API 비용 0)
   → 이미지 다운로드 → Claude Sonnet 비전 판독(JSON)
   → 요일 보정 · 다음 주차 id 계산 · 기간 중복 검사
-  → 파일 생성 + index.js 등록 + 빌드 검증
+  → 파일 생성 + index.js 등록
+  → OG 프리뷰 이미지 재생성(npm run og) + 빌드 검증
   → main 에 커밋·푸시 (자동 반영) → Vercel 배포
   → Slack 공지:  공지 채널에 "이번 주 식단 업데이트" 1건
 ```
