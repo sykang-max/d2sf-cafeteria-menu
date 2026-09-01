@@ -43,10 +43,11 @@ jobs:
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: node .github/scripts/menu-sync/sync.mjs
 
-      - name: 앱 의존성 설치 + 빌드 검증
+      - name: 앱 의존성 설치 + OG 이미지 생성 + 빌드 검증
         if: steps.sync.outputs.changed == 'true'
         run: |
           npm install --no-audit --no-fund
+          npm run og || echo "⚠️ OG 생성 실패(Chromium 등) — 데이터만 반영합니다."
           npm run build
 
       - name: main 에 자동 반영(커밋·푸시)
@@ -55,7 +56,7 @@ jobs:
         run: |
           git config user.name "menu-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add src/data/menu-2026-*.js src/data/index.js .github/menu-sync/processed.json
+          git add src/data/menu-2026-*.js src/data/index.js .github/menu-sync/processed.json public/og public/og.png
           git commit -m "식단 자동 반영: ${{ steps.sync.outputs.label }} (${{ steps.sync.outputs.week_id }})"
           git pull --rebase origin main
           git push origin HEAD:main
