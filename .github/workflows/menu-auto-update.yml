@@ -69,4 +69,5 @@ jobs:
           SITE_URL: ${{ secrets.SITE_URL }}
           MENU_LABEL: ${{ steps.sync.outputs.label }}
           MENU_RANGE: ${{ steps.sync.outputs.range }}
+          MENU_WEEK_ID: ${{ steps.sync.outputs.week_id }}
         run: node .github/scripts/menu-sync/notify.mjs
