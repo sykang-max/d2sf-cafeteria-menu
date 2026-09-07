@@ -155,3 +155,14 @@ const fallbackId = defaultWeekId(weeks);
 copyFileSync(`./public/og/${fallbackId}.png`, "./public/og.png");
 
 console.log(`OG 생성 완료: ${manifest.length}개 주차 + manifest.json (폴백 og.png ← ${fallbackId})`);
+
+// index.html 의 og:image/twitter:image 캐시버스터를 자동 갱신.
+// 손으로 ?r= 숫자를 올릴 필요 없이, OG 재생성마다 새 토큰으로 교체한다.
+// 토큰 = 최신 주차 id + base36 타임스탬프 (주마다 그리고 재생성마다 바뀜).
+const ogToken = `${weeks[0].id}-${Date.now().toString(36)}`;
+const html = readFileSync("./index.html", "utf8").replace(
+  /https:\/\/what2eat-d2sf\.vercel\.app\/api\/og\?[^"]*/g,
+  `https://what2eat-d2sf.vercel.app/api/og?v=${ogToken}`,
+);
+writeFileSync("./index.html", html);
+console.log(`OG 캐시버스터 갱신: /api/og?v=${ogToken}`);

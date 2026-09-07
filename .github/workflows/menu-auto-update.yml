@@ -56,7 +56,7 @@ jobs:
         run: |
           git config user.name "menu-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add src/data/menu-2026-*.js src/data/index.js .github/menu-sync/processed.json public/og public/og.png
+          git add src/data/menu-2026-*.js src/data/index.js .github/menu-sync/processed.json public/og public/og.png index.html
           git commit -m "식단 자동 반영: ${{ steps.sync.outputs.label }} (${{ steps.sync.outputs.week_id }})"
           git pull --rebase origin main
           git push origin HEAD:main
