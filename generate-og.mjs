@@ -18,13 +18,18 @@ import { weeks } from "./src/data/index.js";
 import { weekSpan, defaultWeekId } from "./src/lib/weekDates.js";
 import { BRAND } from "./src/theme.js";
 
-const CORNER_ORDER = ["Korean A", "Korean B", "Snap snack", "International A", "International B"];
+const CORNER_ORDER = ["Korean A", "Korean B", "Snack", "International A", "International B"];
 const CORNER_COLOR = {
   "Korean A": BRAND.green,
   "Korean B": BRAND.green,
-  "Snap snack": "#B45309",
+  "Snack": "#B45309",
   "International A": "#0D9488",
   "International B": "#0D9488",
+};
+// 표시용 코너명 → 데이터 파일에서 쓰이는 코너명 후보(과거 주차 호환).
+// 데이터가 "Snack"으로 바뀌기 전 일부 주차는 "Snap snack"을 썼을 수 있어 둘 다 매칭.
+const CORNER_ALIASES = {
+  "Snack": ["Snack", "Snap snack"],
 };
 const logoB64 = readFileSync("./public/d2sf-logo.png").toString("base64");
 const FONT = "'Pretendard Variable', Pretendard, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif";
@@ -36,7 +41,8 @@ const buildRows = (week) =>
     corner,
     color: CORNER_COLOR[corner] ?? BRAND.charcoal,
     cells: week.days.map(([d, date]) => {
-      const set = week.sets.find((s) => s.meal === "중식" && s.day === d && s.corner === corner);
+      const names = CORNER_ALIASES[corner] ?? [corner];
+      const set = week.sets.find((s) => s.meal === "중식" && s.day === d && names.includes(s.corner));
       return { d, date, dish: set ? set.items[0]?.[0] ?? "—" : "—", special: set?.tag === "단가" };
     }),
   }));
