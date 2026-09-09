@@ -27,6 +27,14 @@ export const pickWeek = (weeks, today) => {
   return weeks.filter((w) => w.fri < today).sort((a, b) => (a.fri > b.fri ? -1 : 1))[0] ?? weeks[0];
 };
 
+// ?week=(또는 ?w=)로 특정 주차를 강제 지정할 때 쓴다.
+// id가 정확히 일치하거나, id가 파라미터의 접두사면(예: "2026-w16-xyz" → "2026-w16") 매칭.
+// 매칭 실패 시 null → 호출부는 기존 날짜 기준 로직으로 폴백한다.
+export const pickWeekByParam = (weeks, param) => {
+  if (!weeks?.length || !param) return null;
+  return weeks.find((w) => param === w.id || param.startsWith(`${w.id}-`)) ?? null;
+};
+
 export default async function handler(req, res) {
   const host = req.headers["x-forwarded-host"] || req.headers.host;
   const proto = (req.headers["x-forwarded-proto"] || "https").split(",")[0];
@@ -39,7 +47,10 @@ export default async function handler(req, res) {
     const mres = await fetch(`${origin}/og/manifest.json`);
     if (mres.ok) {
       const { weeks } = await mres.json();
-      picked = pickWeek(weeks, kstToday());
+      // ?week=(또는 ?w=)로 특정 주차를 지정하면 날짜와 무관하게 그 주차를 보여준다.
+      // 지정이 없거나 매칭 실패면 기존 날짜 기준 선택으로 폴백.
+      const wantWeek = req.query?.week ?? req.query?.w;
+      picked = pickWeekByParam(weeks, wantWeek) ?? pickWeek(weeks, kstToday());
       if (picked?.file) file = picked.file;
     }
   } catch {
