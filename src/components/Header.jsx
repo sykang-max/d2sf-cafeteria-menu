@@ -8,12 +8,16 @@ import { isCurrentWeek } from "../lib/weekDates.js";
  * 로고(회색 PNG)는 그린 바 위에서 잘 보이도록 흰색 pill 안에 넣습니다.
  * 주차가 2개 이상이면 드롭다운, 1개면 주차 라벨만 노출. 모바일/데스크탑 반응형.
  */
-export default function Header({ weeks, weekId, onWeekChange, chatEnabled = false, onOpenChat, onOpenNotice, noticeUnread = false }) {
+export default function Header({ weeks, weekId, onWeekChange, chatEnabled = false, onOpenChat, onOpenNotice, noticeUnread = false, halloween = false, onOpenGame }) {
   const current = weeks.find((w) => w.id === weekId) ?? weeks[0];
   const multiple = weeks.length > 1;
 
   return (
     <header style={{ backgroundColor: BRAND.green }}>
+      {/* 할로윈 위크: 헤더 위 주황·검정 사선 띠 */}
+      {halloween && (
+        <div aria-hidden="true" className="h-1.5" style={{ background: "repeating-linear-gradient(135deg,#F27A1A 0 12px,#1B1426 12px 24px)" }} />
+      )}
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         {/* 로고 + 타이틀 */}
         <div className="flex items-center gap-3">
@@ -28,12 +32,22 @@ export default function Header({ weeks, weekId, onWeekChange, chatEnabled = fals
 
         {/* 주차 선택 + 옐로우 배지 */}
         <div className="flex items-center gap-2">
-          <span
-            className="hidden items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-extrabold sm:inline-flex"
-            style={{ backgroundColor: BRAND.yellow, color: BRAND.charcoal }}
-          >
-            <Sparkles size={13} /> 신선한 한 끼
-          </span>
+          {halloween ? (
+            <button
+              onClick={onOpenGame}
+              className="hidden shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-extrabold transition-transform duration-150 ease-out hover:brightness-110 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 sm:inline-flex"
+              style={{ backgroundColor: "#F27A1A", color: "#1B0F05", outlineColor: "#fff" }}
+            >
+              🎃 호박 게임
+            </button>
+          ) : (
+            <span
+              className="hidden items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-extrabold sm:inline-flex"
+              style={{ backgroundColor: BRAND.yellow, color: BRAND.charcoal }}
+            >
+              <Sparkles size={13} /> 신선한 한 끼
+            </span>
+          )}
 
           {multiple ? (
             <div className="relative">

@@ -13,6 +13,9 @@ import { isSupabaseConfigured } from "./lib/supabase.js";
 import { weeks } from "./data/index.js";
 import { latestNoticeId } from "./data/notices.js";
 import { defaultWeekId, weekRelation } from "./lib/weekDates.js";
+import HalloweenFx from "./components/HalloweenFx.jsx";
+import HalloweenGame from "./components/HalloweenGame.jsx";
+import { isHalloweenActive, loadFxPref, saveFxPref } from "./lib/halloween.js";
 
 const NOTICE_SEEN_KEY = "what2eat-notice-seen";
 
@@ -30,6 +33,16 @@ export default function App() {
       return Boolean(latestNoticeId);
     }
   });
+  // 할로윈 위크(10/26~10/31) — 기간 밖이면 효과·게임 버튼 모두 숨김
+  const [halloween] = useState(() => isHalloweenActive());
+  const [fxOn, setFxOn] = useState(() => loadFxPref());
+  const [gameOpen, setGameOpen] = useState(false);
+  const toggleFx = () => {
+    setFxOn((v) => {
+      saveFxPref(!v);
+      return !v;
+    });
+  };
   const week = weeks.find((w) => w.id === weekId) ?? weeks[0];
   const relation = useMemo(() => weekRelation(week, weeks), [week]);
 
@@ -55,13 +68,26 @@ export default function App() {
           onOpenChat={() => setChatOpen(true)}
           onOpenNotice={openNotice}
           noticeUnread={noticeUnread}
+          halloween={halloween}
+          onOpenGame={() => setGameOpen(true)}
         />
         <main>
           <WeeklyLunchMenu week={week} relation={relation} />
         </main>
-        {/* 모바일 전용 플로팅 버튼 (우하단 한 줄, 아이콘만) — 공지 + Chat. 데스크탑은 헤더 버튼 사용 */}
-        {!chatOpen && !noticeOpen && (
+        {halloween && fxOn && <HalloweenFx />}
+        {/* 모바일 전용 플로팅 버튼 (우하단 한 줄, 아이콘만) — (할로윈 게임) + 공지 + Chat. 데스크탑은 헤더 버튼 사용 */}
+        {!chatOpen && !noticeOpen && !gameOpen && (
           <div className="fixed bottom-5 right-5 z-40 flex items-center gap-3 sm:hidden">
+            {halloween && (
+              <button
+                onClick={() => setGameOpen(true)}
+                aria-label="호박 게임 열기"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full text-[22px] transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{ backgroundColor: "#F27A1A", boxShadow: "0 12px 28px -6px rgba(242,122,26,0.55)", outlineColor: BRAND.green }}
+              >
+                🎃
+              </button>
+            )}
             <button
               onClick={openNotice}
               aria-label="공지사항 열기"
@@ -85,6 +111,7 @@ export default function App() {
             )}
           </div>
         )}
+        {gameOpen && <HalloweenGame onClose={() => setGameOpen(false)} fxOn={fxOn} onToggleFx={toggleFx} />}
         {noticeOpen && <NoticePanel onClose={() => setNoticeOpen(false)} />}
         {chatOpen && (
           <ChatProvider>
