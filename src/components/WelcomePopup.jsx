@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Sparkles, X, Megaphone, MessageCircle, Star, Mail } from "lucide-react";
+import { Sparkles, X, Megaphone, MessageCircle, Star } from "lucide-react";
 import { BRAND } from "../theme.js";
 
 // 주차별로 순환하는 환영 메시지 (한 주에 한 번만 노출)
@@ -23,7 +23,6 @@ const UPDATE = {
   features: [
     { Icon: MessageCircle, title: "실시간 Chat", desc: "자유대화 · 맛집리스트 · 밍글링(소모임) · 주인장께 톡톡 4가지 카드" },
     { Icon: Star, title: "한줄 리뷰 & 랭킹", desc: "식단마다 이모지로 평가하고 역대 최고 평점을 확인" },
-    { Icon: Mail, title: "공지사항", desc: "업데이트 소식은 언제든 우측 편지봉투(📬)에서 확인" },
   ],
 };
 
