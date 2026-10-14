@@ -8,9 +8,10 @@
 export const HALLOWEEN = {
   start: "2026-10-26T00:00:00+09:00",
   end: "2026-11-01T00:00:00+09:00",
-  gameSeconds: 30,
-  // 게임 창 하단에 보이는 상품 안내 문구 — 확정되면 바꿔주세요.
-  prizeNote: "10/31(토) 자정 마감 · 최종 1~3위에게 소정의 상품을 드려요",
+  // 한 판 길이(초). 바꾸면 supabase/halloween.sql 의 연속 제출 간격(15초)보다 길게 유지하세요.
+  gameSeconds: 20,
+  // 게임 창 하단 안내 문구
+  footnote: "10/31(토) 자정 마감 · 사람마다 최고 점수만 랭킹에 남아요",
 };
 
 const FX_KEY = "what2eat-halloween-fx";

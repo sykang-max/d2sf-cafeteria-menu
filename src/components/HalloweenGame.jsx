@@ -280,7 +280,7 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                 )}
               </ol>
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: NIGHT.muted }}>{HALLOWEEN.prizeNote}</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: NIGHT.muted }}>{HALLOWEEN.footnote}</p>
           </aside>
         </div>
       </div>

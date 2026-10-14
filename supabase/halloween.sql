@@ -4,11 +4,11 @@
 --
 --   사람(익명 로그인 user_id)당 1행, 최고 점수만 남깁니다.
 --   테이블에 직접 쓰는 권한은 주지 않고, submit_halloween_score() 로만 기록합니다.
---     · 점수 범위 0~200 (30초 게임에서 정상적으로 나올 수 있는 값보다 넉넉하게)
---     · 같은 사람이 25초 안에 다시 제출하면 거절 (게임 한 판이 30초)
+--     · 점수 범위 0~200 (20초 게임에서 정상적으로 나올 수 있는 값보다 넉넉하게)
+--     · 같은 사람이 15초 안에 다시 제출하면 거절 (게임 한 판이 20초)
 --     · 2026-11-01 00:00 KST 이후 제출 거절 (src/lib/halloween.js 의 end 와 같은 값)
 --   ※ 점수는 브라우저에서 계산되므로 개발자도구로 조작하는 것까지 막지는 못합니다.
---     상품 지급 전에 상위권 기록을 한 번 눈으로 확인하세요.
+--     이상한 기록이 보이면 해당 행을 지우면 됩니다.
 -- ═════════════════════════════════════════════════════════════
 
 create table if not exists public.halloween_scores (
@@ -64,7 +64,7 @@ begin
   end if;
 
   select h.last_played_at into prev from public.halloween_scores h where h.user_id = uid;
-  if prev is not null and now() - prev < interval '25 seconds' then
+  if prev is not null and now() - prev < interval '15 seconds' then
     raise exception 'too fast';
   end if;
 
