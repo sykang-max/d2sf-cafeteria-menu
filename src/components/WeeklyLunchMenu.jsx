@@ -12,7 +12,11 @@ import { useReviews } from "../context/ReviewsContext.jsx";
  * 로직·레이아웃은 원본 그대로 유지하고, 팔레트만 써브웨이 그린·옐로우 체계로 재배색.
  */
 
-const sum = (items) => items.reduce((s, [, k]) => s + k, 0);
+// 데이터의 kcal 추정치가 실제보다 과하게 잡혀 있어, 표시 시점에 2/3 로 보정합니다.
+// (데이터 파일은 그대로 두고 여기서만 일괄 적용 — 자동 생성되는 새 주차에도 동일하게 반영)
+const KCAL_SCALE = 2 / 3;
+const kcal = (k) => Math.round(k * KCAL_SCALE);
+const sum = (items) => items.reduce((s, [, k]) => s + kcal(k), 0);
 
 // 식단(세트) 단위 평가 키 — "대표메뉴(첫 항목)"만 사용합니다. 코너/요일과 무관하게
 // 대표메뉴 이름으로 평점이 누적되고, 같은 메뉴가 다음 주 다시 나와도 같은 키로 쌓입니다.
@@ -81,7 +85,7 @@ function SetCard({ s, showKcal, reviewKey }) {
         {s.items.map(([n, k], i) => (
           <div key={i} className="flex items-baseline justify-between gap-2">
             <span className="text-[13.5px] text-stone-700">{n}</span>
-            {showKcal && <span className="shrink-0 font-mono text-[11px] tabular-nums text-stone-300">{k}</span>}
+            {showKcal && <span className="shrink-0 font-mono text-[11px] tabular-nums text-stone-300">{kcal(k)}</span>}
           </div>
         ))}
       </div>
@@ -387,7 +391,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                     <span className="truncate text-[13px] text-stone-700">{n}</span>
                   </div>
                   <span className="flex shrink-0 items-center gap-1.5">
-                    {showKcal && <span className="shrink-0 font-mono text-[11px] text-stone-300">{k}kcal</span>}
+                    {showKcal && <span className="shrink-0 font-mono text-[11px] text-stone-300">{kcal(k)}kcal</span>}
                     <ItemReview dish={n} />
                   </span>
                 </div>

@@ -1,0 +1,415 @@
+<title>D2SF 할로윈 식단</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Creepster&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one night-sky column — hero with moon, weekly menu as day cards (Friday = special), then the game panel. Effects canvas floats over everything, click-through. */
+:root {
+  --night: #15101d;
+  --dusk: #231a31;
+  --dusk-line: #3a2c4d;
+  --pumpkin: #f27a1a;
+  --candle: #ffd36b;
+  --bone: #efe6d8;
+  --muted: #a899bb;
+  --moss: #8db362;
+  --blood: #e0475a;
+  --display-ko: "Black Han Sans", "Noto Sans KR", system-ui, sans-serif;
+  --display-en: "Creepster", "Black Han Sans", fantasy, cursive;
+  --body: "Noto Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--night);
+  background-image: radial-gradient(1200px 600px at 85% -10%, #2d2140 0%, transparent 60%);
+  color: var(--bone);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-inline: 16px;
+  padding-block: 0 48px;
+  min-height: 100%;
+}
+.wrap { max-width: 980px; margin: 0 auto; position: relative; z-index: 1; display: grid; gap: 40px; }
+
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+
+/* Hero */
+.hero { position: relative; padding-block: 48px 8px; display: grid; gap: 10px; }
+.moon {
+  position: absolute; right: 4%; top: 28px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 36%, #fff4d6 0%, #f3dca0 55%, #d9b56a 100%);
+  box-shadow: 0 0 60px 10px rgba(255, 211, 107, .25);
+  z-index: -1;
+}
+.eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.hero h1 { margin: 0; font-family: var(--display-ko); font-weight: 400; font-size: clamp(36px, 7vw, 64px); line-height: 1.05; text-wrap: balance; }
+.hero h1 .en { display: block; font-family: var(--display-en); color: var(--pumpkin); font-size: .85em; letter-spacing: .03em; text-shadow: 0 0 18px rgba(242, 122, 26, .45); }
+.hero p { margin: 0; color: var(--muted); max-width: 46ch; }
+.hero-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+.chip { font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--dusk-line); color: var(--bone); background: var(--dusk); font-variant-numeric: tabular-nums; }
+button {
+  font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 10px;
+  padding: 10px 18px; background: var(--pumpkin); color: #1b0f05;
+}
+button:hover { filter: brightness(1.08); }
+button:focus-visible { outline: 3px solid var(--candle); outline-offset: 2px; }
+button.ghost { background: transparent; color: var(--bone); border: 1px solid var(--dusk-line); font-weight: 500; padding: 6px 14px; font-size: 13px; }
+
+h2 { margin: 0 0 4px; font-family: var(--display-ko); font-weight: 400; font-size: 28px; }
+.sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+
+/* Menu */
+.days { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.day { background: var(--dusk); border: 1px solid var(--dusk-line); border-radius: 14px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.day header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.day .dow { font-family: var(--display-ko); font-size: 22px; }
+.day .date { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.day ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.day li.main { font-weight: 700; color: var(--candle); }
+.day .dessert { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--dusk-line); padding-top: 8px; }
+.day .kcal { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.day.special { border-color: var(--pumpkin); background: linear-gradient(160deg, #3a1f12 0%, var(--dusk) 70%); box-shadow: 0 0 0 1px var(--pumpkin), 0 10px 40px -12px rgba(242, 122, 26, .5); }
+.tag { font-family: var(--display-en); color: var(--pumpkin); font-size: 18px; letter-spacing: .04em; }
+.note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+/* Game */
+.game-panel { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; }
+@media (max-width: 760px) { .game-panel { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--dusk-line); background: linear-gradient(180deg, #1c1428 0%, #2a1c22 100%); }
+#game { display: block; width: 100%; height: 380px; touch-action: manipulation; cursor: crosshair; }
+.hud { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: space-between; font-weight: 700; font-variant-numeric: tabular-nums; pointer-events: none; text-shadow: 0 1px 4px #000; }
+.overlay { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; background: rgba(21, 16, 29, .72); padding: 16px; }
+.overlay h3 { margin: 0; font-family: var(--display-ko); font-weight: 400; font-size: 30px; }
+.overlay p { margin: 0; color: var(--muted); max-width: 34ch; }
+.overlay .big { font-family: var(--display-en); font-size: 56px; color: var(--candle); line-height: 1; }
+
+.side { display: grid; gap: 12px; align-content: start; }
+.card { background: var(--dusk); border: 1px solid var(--dusk-line); border-radius: 14px; padding: 16px; display: grid; gap: 8px; }
+.card h4 { margin: 0; font-size: 15px; }
+.legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.legend li { display: flex; justify-content: space-between; gap: 8px; }
+.legend b { font-variant-numeric: tabular-nums; }
+.pos { color: var(--moss); } .neg { color: var(--blood); } .gold { color: var(--candle); }
+#totResult { min-height: 52px; font-size: 15px; font-weight: 700; display: grid; place-content: center; text-align: center; border-radius: 10px; background: #1a1324; padding: 8px; }
+#totResult.treat { color: var(--candle); }
+#totResult.trick { color: var(--blood); }
+
+footer { color: var(--muted); font-size: 12px; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="moon" aria-hidden="true"></div>
+    <span class="eyebrow">D2SF Cafeteria · Halloween Week</span>
+    <h1><span class="en">Happy Halloween</span>할로윈 위크 식단</h1>
+    <p>10월 마지막 주, 식당에 호박이 나타났습니다. 금요일엔 할로윈 스페셜 메뉴와 Trick or Treat 뽑기가 준비되어 있어요.</p>
+    <div class="hero-row">
+      <span class="chip">10.26 (월) – 10.30 (금)</span>
+      <span class="chip">중식 11:30 – 13:30</span>
+      <button class="ghost" id="fxToggle" type="button">효과 끄기</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="menuTitle">
+    <h2 id="menuTitle">이번 주 메뉴</h2>
+    <p class="sub">할로윈 31일이 토요일이라 스페셜은 30일 금요일에 진행합니다.</p>
+    <div class="days" id="days"></div>
+    <p class="note">* 메뉴는 예시입니다. 실제 식단으로 바꿔 넣어주세요.</p>
+  </section>
+
+  <section aria-labelledby="gameTitle">
+    <h2 id="gameTitle">호박 터뜨리기</h2>
+    <p class="sub">30초 동안 떠오르는 호박을 최대한 많이 터뜨리세요. 유령은 피하세요.</p>
+    <div class="game-panel">
+      <div class="stage">
+        <canvas id="game"></canvas>
+        <div class="hud" aria-live="polite"><span id="hudScore">0점</span><span id="hudTime">30.0초</span></div>
+        <div class="overlay" id="overlay">
+          <h3 id="ovTitle">준비됐나요?</h3>
+          <div class="big" id="ovScore" hidden></div>
+          <p id="ovText">호박을 클릭(터치)하면 점수가 올라요.</p>
+          <button id="startBtn" type="button">게임 시작</button>
+        </div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h4>점수표</h4>
+          <ul class="legend">
+            <li><span>🎃 호박</span><b class="pos">+1</b></li>
+            <li><span>✨ 황금 호박</span><b class="gold">+5</b></li>
+            <li><span>👻 유령</span><b class="neg">−3</b></li>
+          </ul>
+          <ul class="legend" style="border-top:1px dashed var(--dusk-line);padding-top:8px"><li><span>내 최고 기록</span><b id="best">0점</b></li></ul>
+        </div>
+        <div class="card">
+          <h4>Trick or Treat 뽑기</h4>
+          <div id="totResult">무엇이 나올까요?</div>
+          <button id="totBtn" type="button">뽑기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>D2SF Cafeteria · Halloween 2026</footer>
+</div>
+
+<script>
+(() => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ---------- Menu ---------- */
+  const MENU = [
+    { dow: '월', date: '10.26', items: ['단호박 영양밥', '소고기 무국', '춘천 닭갈비', '배추김치'], dessert: '호박식혜', kcal: 812 },
+    { dow: '화', date: '10.27', items: ['미트볼 "눈알" 스파게티', '마녀의 브로콜리 수프', '갈릭 브레드', '오이 피클'], dessert: '귤', kcal: 846 },
+    { dow: '수', date: '10.28', items: ['블랙 짜장밥', '짬뽕국', '찹쌀 탕수육', '단무지'], dessert: '블러드 오렌지 젤리', kcal: 901 },
+    { dow: '목', date: '10.29', items: ['유령 카레라이스', '미소 된장국', '등심 돈가스', '양배추 샐러드'], dessert: '거미줄 초코 머핀', kcal: 934 },
+    { dow: '금', date: '10.30', special: true, items: ['단호박 크림 파스타', '미라 소시지', '단호박 수프', '그린 샐러드'], dessert: '유령 머랭 · 블러드 오렌지 에이드', kcal: 889 }
+  ];
+  const daysEl = document.getElementById('days');
+  daysEl.innerHTML = MENU.map(d => `
+    <article class="day${d.special ? ' special' : ''}">
+      <header><span class="dow">${d.dow}</span><span class="date">${d.date}</span></header>
+      ${d.special ? '<span class="tag">Halloween Special</span>' : ''}
+      <ul>${d.items.map((it, i) => `<li${i === 0 ? ' class="main"' : ''}>${it}</li>`).join('')}</ul>
+      <div class="dessert">후식 · ${d.dessert}</div>
+      <div class="kcal">${d.kcal} kcal</div>
+    </article>`).join('');
+
+  /* ---------- Drawing helpers ---------- */
+  function drawPumpkin(c, x, y, r, rot, gold) {
+    c.save(); c.translate(x, y); c.rotate(rot);
+    const light = gold ? '#f7cf4f' : '#f27a1a', dark = gold ? '#d29f22' : '#c85a0e';
+    [[-0.42, dark], [0.42, dark], [0, light]].forEach(([ox, col]) => {
+      c.beginPath(); c.ellipse(ox * r, 0, r * 0.62, r * 0.84, 0, 0, Math.PI * 2);
+      c.fillStyle = col; c.fill();
+    });
+    c.fillStyle = '#5e7d3a';
+    c.beginPath(); c.moveTo(-r * 0.08, -r * 0.78); c.lineTo(r * 0.12, -r * 0.78); c.lineTo(r * 0.2, -r * 1.08); c.lineTo(0, -r * 1.05); c.closePath(); c.fill();
+    c.fillStyle = '#ffd36b'; c.shadowColor = '#ffb03a'; c.shadowBlur = r * 0.4;
+    const eye = s => { c.beginPath(); c.moveTo(s * r * 0.36, -r * 0.08); c.lineTo(s * r * 0.14, -r * 0.08); c.lineTo(s * r * 0.25, -r * 0.34); c.closePath(); c.fill(); };
+    eye(-1); eye(1);
+    c.beginPath(); c.moveTo(-r * 0.42, r * 0.18);
+    const teeth = [[-0.28, 0.3], [-0.16, 0.2], [0, 0.34], [0.16, 0.2], [0.28, 0.3], [0.42, 0.18]];
+    teeth.forEach(([tx, ty]) => c.lineTo(tx * r, ty * r));
+    c.quadraticCurveTo(0, r * 0.62, -r * 0.42, r * 0.18); c.fill();
+    c.restore();
+  }
+  function drawGhost(c, x, y, r, t) {
+    c.save(); c.translate(x, y + Math.sin(t * 4) * r * 0.08);
+    c.fillStyle = 'rgba(239,230,216,.95)';
+    c.beginPath(); c.arc(0, -r * 0.15, r * 0.75, Math.PI, 0);
+    c.lineTo(r * 0.75, r * 0.75);
+    for (let i = 0; i < 4; i++) {
+      const x0 = r * 0.75 - (i + 0.5) * r * 0.375, x1 = r * 0.75 - (i + 1) * r * 0.375;
+      c.quadraticCurveTo(x0, i % 2 ? r * 0.95 : r * 0.5, x1, r * 0.75);
+    }
+    c.closePath(); c.fill();
+    c.fillStyle = '#15101d';
+    c.beginPath(); c.ellipse(-r * 0.25, -r * 0.15, r * 0.1, r * 0.15, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(r * 0.25, -r * 0.15, r * 0.1, r * 0.15, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(0, r * 0.2, r * 0.12, r * 0.08, 0, 0, Math.PI * 2); c.fill();
+    c.restore();
+  }
+  function drawBat(c, x, y, s, flap) {
+    c.save(); c.translate(x, y); c.fillStyle = '#4a395f';
+    const wing = dir => {
+      c.beginPath(); c.moveTo(0, 0);
+      c.quadraticCurveTo(dir * s * 0.5, -s * 0.7 * flap, dir * s * 1.2, -s * 0.3 * flap);
+      c.quadraticCurveTo(dir * s * 0.95, s * 0.05, dir * s * 0.75, s * 0.15);
+      c.quadraticCurveTo(dir * s * 0.55, 0, dir * s * 0.4, s * 0.2);
+      c.quadraticCurveTo(dir * s * 0.25, s * 0.05, 0, s * 0.25);
+      c.closePath(); c.fill();
+    };
+    wing(-1); wing(1);
+    c.beginPath(); c.ellipse(0, s * 0.08, s * 0.16, s * 0.24, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#ffd36b'; c.fillRect(-s * 0.08, 0, s * 0.05, s * 0.05); c.fillRect(s * 0.03, 0, s * 0.05, s * 0.05);
+    c.restore();
+  }
+
+  /* ---------- Floating pumpkins & bats overlay ---------- */
+  const fx = document.getElementById('fx'), fc = fx.getContext('2d');
+  const toggle = document.getElementById('fxToggle');
+  let fxOn = !reduceMotion && store.get('d2sf-fx') !== 'off';
+  let W = 0, H = 0, flyers = [], fxRaf = 0, fxLast = 0;
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  function sizeFx() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    fx.width = W * dpr; fx.height = H * dpr; fc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function makeFlyer(kind, anywhere) {
+    if (kind === 'pumpkin') {
+      return { kind, x: rand(0, W), y: anywhere ? rand(0, H) : H + 40, r: rand(12, 24), vx: rand(-18, 18), vy: rand(-38, -20), rot: rand(-.4, .4), vr: rand(-.6, .6), ph: rand(0, 6) };
+    }
+    const dir = Math.random() < .5 ? 1 : -1;
+    return { kind, x: anywhere ? rand(0, W) : (dir > 0 ? -40 : W + 40), y: rand(H * .05, H * .6), s: rand(12, 20), vx: dir * rand(50, 90), ph: rand(0, 6) };
+  }
+  function seedFx() {
+    const n = W < 600 ? 4 : 7;
+    flyers = [];
+    for (let i = 0; i < n; i++) flyers.push(makeFlyer('pumpkin', true));
+    for (let i = 0; i < Math.ceil(n * .6); i++) flyers.push(makeFlyer('bat', true));
+  }
+  function fxFrame(ts) {
+    const dt = Math.min((ts - (fxLast || ts)) / 1000, .05); fxLast = ts;
+    fc.clearRect(0, 0, W, H);
+    const t = ts / 1000;
+    flyers.forEach((f, i) => {
+      if (f.kind === 'pumpkin') {
+        f.x += (f.vx + Math.sin(t + f.ph) * 14) * dt; f.y += f.vy * dt; f.rot += f.vr * dt;
+        if (f.y < -50 || f.x < -60 || f.x > W + 60) flyers[i] = makeFlyer('pumpkin', false);
+        fc.globalAlpha = .85; drawPumpkin(fc, f.x, f.y, f.r, f.rot, false);
+      } else {
+        f.x += f.vx * dt; const y = f.y + Math.sin(t * 2 + f.ph) * 18;
+        if (f.x < -80 || f.x > W + 80) flyers[i] = makeFlyer('bat', false);
+        fc.globalAlpha = .9; drawBat(fc, f.x, y, f.s, Math.sin(t * 14 + f.ph));
+      }
+    });
+    fc.globalAlpha = 1;
+    fxRaf = requestAnimationFrame(fxFrame);
+  }
+  function setFx(on) {
+    fxOn = on; store.set('d2sf-fx', on ? 'on' : 'off');
+    toggle.textContent = on ? '효과 끄기' : '효과 켜기';
+    cancelAnimationFrame(fxRaf); fxLast = 0;
+    if (on) { sizeFx(); seedFx(); fxRaf = requestAnimationFrame(fxFrame); }
+    else fc.clearRect(0, 0, W, H);
+  }
+  toggle.addEventListener('click', () => setFx(!fxOn));
+  window.addEventListener('resize', () => { if (fxOn) { sizeFx(); seedFx(); } });
+  document.addEventListener('visibilitychange', () => {
+    if (!fxOn) return;
+    if (document.hidden) cancelAnimationFrame(fxRaf);
+    else { fxLast = 0; fxRaf = requestAnimationFrame(fxFrame); }
+  });
+  setFx(fxOn);
+
+  /* ---------- Game: 호박 터뜨리기 ---------- */
+  const gc = document.getElementById('game'), g = gc.getContext('2d');
+  const hudScore = document.getElementById('hudScore'), hudTime = document.getElementById('hudTime');
+  const overlay = document.getElementById('overlay'), ovTitle = document.getElementById('ovTitle'),
+        ovScore = document.getElementById('ovScore'), ovText = document.getElementById('ovText'),
+        startBtn = document.getElementById('startBtn'), bestEl = document.getElementById('best');
+  const DURATION = 30;
+  let GW = 0, GH = 0, items = [], pops = [], score = 0, timeLeft = DURATION, running = false, spawnAcc = 0, gRaf = 0, gLast = 0;
+  let best = parseInt(store.get('d2sf-pumpkin-best') || '0', 10) || 0;
+  bestEl.textContent = best + '점';
+
+  function sizeGame() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = gc.getBoundingClientRect();
+    GW = rect.width; GH = rect.height;
+    gc.width = GW * dpr; gc.height = GH * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!running) drawGame(performance.now() / 1000);
+  }
+  function spawn() {
+    const roll = Math.random();
+    const type = roll < .08 ? 'gold' : roll < .26 ? 'ghost' : 'pumpkin';
+    const r = Math.max(20, Math.min(34, GW / 18)) * (type === 'gold' ? .85 : 1);
+    const travel = rand(2.4, 3.6) * (type === 'gold' ? .7 : 1);
+    items.push({ type, x: rand(r, GW - r), y: GH + r, r, vy: -(GH + r * 2) / travel, vx: rand(-25, 25), rot: rand(-.3, .3), vr: rand(-1, 1) });
+  }
+  function drawGame(t) {
+    g.clearRect(0, 0, GW, GH);
+    g.fillStyle = 'rgba(255,211,107,.6)';
+    for (let i = 0; i < 30; i++) { const sx = (i * 97.3) % GW, sy = (i * 53.7) % (GH * .7); g.fillRect(sx, sy, 1.5, 1.5); }
+    items.forEach(it => {
+      if (it.type === 'ghost') drawGhost(g, it.x, it.y, it.r, t);
+      else drawPumpkin(g, it.x, it.y, it.r, it.rot, it.type === 'gold');
+    });
+    pops.forEach(p => {
+      g.globalAlpha = Math.max(p.life, 0);
+      g.fillStyle = p.color; g.font = '700 20px "Noto Sans KR", sans-serif'; g.textAlign = 'center';
+      g.fillText(p.text, p.x, p.y);
+    });
+    g.globalAlpha = 1;
+  }
+  function gameFrame(ts) {
+    const dt = Math.min((ts - (gLast || ts)) / 1000, .05); gLast = ts;
+    timeLeft -= dt;
+    const pace = .62 - (1 - timeLeft / DURATION) * .28; // spawns get faster
+    spawnAcc += dt;
+    while (spawnAcc > pace) { spawnAcc -= pace; spawn(); }
+    items.forEach(it => { it.y += it.vy * dt; it.x += it.vx * dt; it.rot += it.vr * dt; });
+    items = items.filter(it => it.y > -it.r * 1.5);
+    pops.forEach(p => { p.y -= 40 * dt; p.life -= dt * 1.4; });
+    pops = pops.filter(p => p.life > 0);
+    drawGame(ts / 1000);
+    hudScore.textContent = score + '점';
+    hudTime.textContent = Math.max(timeLeft, 0).toFixed(1) + '초';
+    if (timeLeft <= 0) return endGame();
+    gRaf = requestAnimationFrame(gameFrame);
+  }
+  function startGame() {
+    sizeGame();
+    items = []; pops = []; score = 0; timeLeft = DURATION; spawnAcc = 0; gLast = 0; running = true;
+    overlay.hidden = true;
+    gRaf = requestAnimationFrame(gameFrame);
+  }
+  function endGame() {
+    running = false; cancelAnimationFrame(gRaf);
+    hudTime.textContent = '0.0초';
+    const isBest = score > best;
+    if (isBest) { best = score; store.set('d2sf-pumpkin-best', String(best)); bestEl.textContent = best + '점'; }
+    ovTitle.textContent = isBest ? '최고 기록 달성!' : '게임 종료';
+    ovScore.hidden = false; ovScore.textContent = score;
+    ovText.textContent = score >= 40 ? '호박 사냥꾼 인정. 배식대에서 화면을 보여주세요.' : '조금만 더! 황금 호박을 노려보세요.';
+    startBtn.textContent = '다시 하기';
+    overlay.hidden = false;
+    startBtn.focus();
+  }
+  gc.addEventListener('pointerdown', e => {
+    if (!running) return;
+    const rect = gc.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      if (Math.hypot(px - it.x, py - it.y) <= it.r * 1.05) {
+        const val = it.type === 'gold' ? 5 : it.type === 'ghost' ? -3 : 1;
+        score = Math.max(0, score + val);
+        pops.push({ x: it.x, y: it.y, life: 1, text: (val > 0 ? '+' : '−') + Math.abs(val), color: val > 0 ? (val > 1 ? '#ffd36b' : '#8db362') : '#e0475a' });
+        items.splice(i, 1);
+        break;
+      }
+    }
+  });
+  startBtn.addEventListener('click', startGame);
+  window.addEventListener('resize', sizeGame);
+  sizeGame();
+  // idle preview: a few pumpkins resting in the stage
+  items = [{ type: 'pumpkin', x: GW * .3, y: GH * .62, r: 30, rot: -.15 }, { type: 'gold', x: GW * .55, y: GH * .45, r: 26, rot: .1 }, { type: 'ghost', x: GW * .76, y: GH * .66, r: 30, rot: 0 }];
+  drawGame(0); items = [];
+
+  /* ---------- Trick or Treat ---------- */
+  const TOT = [
+    { k: 'treat', t: '🍬 Treat! 사탕 한 줌 받아가세요' },
+    { k: 'treat', t: '🧁 Treat! 디저트 하나 더' },
+    { k: 'treat', t: '🥤 Treat! 음료 사이즈업' },
+    { k: 'treat', t: '🎃 Treat! 호박 머랭 쿠키 증정' },
+    { k: 'trick', t: '👻 Trick! 유령이 디저트를 먹어버렸어요' },
+    { k: 'trick', t: '🕷️ Trick! 거미가 다녀갔어요. 다음 기회에' }
+  ];
+  const totBtn = document.getElementById('totBtn'), totResult = document.getElementById('totResult');
+  totBtn.addEventListener('click', () => {
+    totBtn.disabled = true; let n = 0;
+    const spin = setInterval(() => {
+      const r = TOT[Math.floor(Math.random() * TOT.length)];
+      totResult.className = ''; totResult.textContent = r.t;
+      if (++n >= (reduceMotion ? 1 : 10)) {
+        clearInterval(spin); totResult.className = r.k; totBtn.disabled = false; totBtn.textContent = '다시 뽑기';
+      }
+    }, 80);
+  });
+})();
+</script>

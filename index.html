@@ -13,20 +13,24 @@
          (public/og/<주차id>.png + manifest.json, npm run og 로 생성).
          주차 라벨·날짜는 이미지 안에 들어 있으므로 아래 제목에는 주차를 적지 않습니다 —
          다음 주 식단을 미리 등록해도 제목이 어긋나지 않게 하기 위함입니다.
-         슬랙/카카오가 캐시한 썸네일을 강제로 갱신하려면 ?r= 뒤 숫자를 올리세요. -->
+
+         ?r=%OG_REV% 의 %OG_REV% 는 빌드 시 커밋 해시(7자)로 치환됩니다(vite.config.js).
+         슬랙·카카오는 "이미지 URL" 단위로 썸네일을 캐시하므로, 배포마다 이 값이 바뀌어야
+         같은 주소로 올린 공지에서도 새 프리뷰가 보입니다. 수동으로 올릴 필요 없습니다.
+         (공지 링크 자체의 캐시는 페이지 URL 뒤 ?v=<주차id> 로 무효화합니다 — notify.mjs) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="D2SF 카페테리아 주간 메뉴" />
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:url" content="https://what2eat-d2sf.vercel.app/" />
     <meta property="og:title" content="D2SF 카페테리아 — 이번 주 메뉴" />
     <meta property="og:description" content="🍴 오늘 뭐 먹지? 메뉴 검색부터 칼로리 분석까지, 점심 고민은 여기서 끝" />
-    <meta property="og:image" content="https://what2eat-d2sf.vercel.app/api/og?r=11" />
+    <meta property="og:image" content="https://what2eat-d2sf.vercel.app/api/og?r=%OG_REV%" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="D2SF 카페테리아 — 이번 주 메뉴" />
     <meta name="twitter:description" content="🍴 오늘 뭐 먹지? 메뉴 검색부터 칼로리 분석까지, 점심 고민은 여기서 끝" />
-    <meta name="twitter:image" content="https://what2eat-d2sf.vercel.app/api/og?r=11" />
+    <meta name="twitter:image" content="https://what2eat-d2sf.vercel.app/api/og?r=%OG_REV%" />
     <!-- /OG -->
   </head>
   <body>

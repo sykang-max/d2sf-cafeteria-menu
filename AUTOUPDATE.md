@@ -35,7 +35,9 @@
 
 ## STEP 5 — 에셋 생성·검증
 - `npm install` → `npm run og` (puppeteer/Chromium 필요). 등록된 **모든 주차의 프리뷰를 재생성**한다: `public/og/<주차id>.png` + `public/og/manifest.json` + 폴백 `public/og.png`. `단가` 태그(보라색 스페셜) 셀엔 자동으로 "Special Menu" 태그가 표시된다.
-  - `/api/og`가 manifest의 `mon~fri`와 **오늘(KST)**을 비교해 이번 주 이미지를 고른다. 그래서 다음 주를 미리 등록해도 링크 프리뷰는 그 주가 되기 전까지 안 바뀐다 — `?r=` 숫자를 올릴 필요 없다.
+  - `/api/og`가 manifest의 `mon~fri`와 **오늘(KST)**을 비교해 이번 주 이미지를 고른다. 그래서 다음 주를 미리 등록해도 링크 프리뷰는 그 주가 되기 전까지 안 바뀐다.
+  - **이 단계를 건너뛰면 안 된다.** manifest에 새 주차가 없으면 `/api/og`는 "가장 최근 지난 주차"로 폴백해, 캐시를 아무리 무효화해도 프리뷰가 옛 그림으로 남는다.
+  - `index.html`의 `?r=%OG_REV%`는 **빌드 시 커밋 해시(7자)로 자동 치환**된다(`vite.config.js`). 손으로 숫자를 올릴 필요 없다.
   - Chromium이 없어 `npm run og`가 실패하면 **데이터 변경은 그대로 진행**하고 최종 보고에 "OG 미생성" 명시.
 - `npm run build`로 데이터 컴파일 검증.
 
@@ -47,6 +49,13 @@
 - 스테이징: `src/data/menu-2026-w<N+1>.js`, `src/data/index.js`, (생성됐다면) `public/og/`, `public/og.png`. **`index.html`·다른 파일·Slack 채널명·브랜딩 텍스트는 건드리지 말 것.**
 - 커밋 메시지(따옴표 없이): `식단표 자동 업데이트: <label> (<range>)`.
 - `git push origin main`. 푸시가 인증으로 실패하면 `gh pr create --fill --base main`로 PR을 연다. 어느 쪽이 됐는지 보고.
+
+## STEP 8 — 슬랙 공지(캐시 주의)
+- 슬랙은 **올린 링크의 URL 단위로 프리뷰(unfurl)를 캐시**한다. 매주 같은 주소를 올리면 지난주 프리뷰가 그대로 다시 붙는다.
+- 그래서 공지에는 **주차 버전 파라미터**를 붙인 주소를 쓴다: `https://what2eat-d2sf.vercel.app/?v=<주차id>` (예: `?v=2026-w15`).
+- 프리뷰 **이미지**의 캐시는 `og:image=/api/og?r=<커밋해시>`가 배포마다 바뀌면서 자동으로 풀린다.
+- **배포가 끝난 뒤에 올린다.** push 직후 올리면 슬랙 크롤러가 예전 `index.html`을 읽어 옛 이미지를 캐시한다. 사이트를 열어 `?r=` 값이 방금 커밋 해시와 같은지 확인하고 공지한다.
+- 자동화(GitHub Actions)에서는 `wait-deploy.mjs`가 이 확인을 대신하고, `notify.mjs`가 `?v=` 를 붙여 보낸다.
 
 ## 최종 보고
 추가한 주차, 파일 경로, OG 생성 여부, push/PR 여부, 교차검증 수정·경고를 간단히 출력한다.
