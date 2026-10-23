@@ -29,8 +29,11 @@ export function createPumpkinGame(canvas, { seconds, onHud, onEnd }) {
     const roll = Math.random();
     const type = roll < 0.08 ? "gold" : roll < 0.26 ? "ghost" : "pumpkin";
     const r = Math.max(20, Math.min(34, W / 16)) * (type === "gold" ? 0.85 : 1);
-    const travel = rand(2.4, 3.6) * (type === "gold" ? 0.7 : 1);
-    items.push({ type, x: rand(r, W - r), y: H + r, r, vy: -(H + r * 2) / travel, vx: rand(-25, 25), rot: rand(-0.3, 0.3), vr: rand(-1, 1) });
+    // 화면을 가로지르는 시간(초): 일반 2.4~3.6초, 황금 호박은 절반(1.2~1.8초)에 옆으로도 더 크게 흔들립니다
+    const gold = type === "gold";
+    const travel = rand(2.4, 3.6) * (gold ? 0.5 : 1);
+    const drift = gold ? 60 : 25;
+    items.push({ type, x: rand(r, W - r), y: H + r, r, vy: -(H + r * 2) / travel, vx: rand(-drift, drift), rot: rand(-0.3, 0.3), vr: rand(-1, 1) });
   };
 
   const draw = (t) => {
