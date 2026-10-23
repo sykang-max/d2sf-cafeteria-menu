@@ -1,13 +1,22 @@
 // ─────────────────────────────────────────────────────────────
 // 호박 터뜨리기 전 직원 랭킹 (Supabase: supabase/halloween.sql)
-//   - 사람당 1행(익명 로그인 user_id 기준), 최고 점수만 남습니다.
+//   - DB 는 브라우저(익명 로그인 user_id)당 1행, 최고 점수만 남습니다.
+//   - 화면 랭킹은 "닉네임 · 소속"이 같으면 한 사람으로 보고 최고 점수 1개만 보여줍니다.
+//     (같은 사람이 PC·휴대폰에서 각각 하면 DB 에는 2행이지만 랭킹에는 1줄)
 //   - 쓰기는 submit_halloween_score RPC 로만 가능 (점수 범위·연속 제출·마감 시각을 서버에서 검사)
 // ─────────────────────────────────────────────────────────────
 import { supabase, ensureAnonSession } from "./supabase.js";
 
-const BOARD_LIMIT = 20;
+const FETCH_LIMIT = 1000; // 전 직원 규모라 전체를 받아 화면에서 합칩니다
 
-/** 상위 랭킹 (최고점 내림차순, 동점이면 먼저 달성한 사람이 위) */
+/** 같은 사람 판정 키: 앞뒤·중복 공백과 대소문자 차이는 무시 */
+const personKey = (r) =>
+  [r.nickname, r.affiliation || ""].map((s) => s.trim().replace(/\s+/g, " ").toLowerCase()).join("\u0000");
+
+/**
+ * 전체 랭킹 (최고점 내림차순, 동점이면 먼저 달성한 사람이 위), 닉네임·소속 기준 1인 1줄.
+ * 각 줄의 userIds 에는 합쳐진 모든 user_id 가 들어 있어 "나" 표시에 씁니다.
+ */
 export async function fetchLeaderboard() {
   if (!supabase) return [];
   const { data, error } = await supabase
@@ -15,13 +24,22 @@ export async function fetchLeaderboard() {
     .select("user_id, nickname, affiliation, best_score, best_at")
     .order("best_score", { ascending: false })
     .order("best_at", { ascending: true })
-    .limit(BOARD_LIMIT);
+    .limit(FETCH_LIMIT);
   if (error) {
     console.warn("[what2eat] 할로윈 랭킹 로드 실패:", error.message);
     return [];
   }
-  // PostgREST 가 숫자를 문자열로 줄 수 있어 숫자로 강제 변환
-  return (data ?? []).map((r) => ({ ...r, best_score: Number(r.best_score) || 0 }));
+  // 정렬된 순서대로 처음 나온 행이 그 사람의 최고 기록
+  const byPerson = new Map();
+  for (const raw of data ?? []) {
+    // PostgREST 가 숫자를 문자열로 줄 수 있어 숫자로 강제 변환
+    const r = { ...raw, best_score: Number(raw.best_score) || 0 };
+    const key = personKey(r);
+    const hit = byPerson.get(key);
+    if (hit) hit.userIds.push(r.user_id);
+    else byPerson.set(key, { ...r, userIds: [r.user_id] });
+  }
+  return [...byPerson.values()];
 }
 
 /**
