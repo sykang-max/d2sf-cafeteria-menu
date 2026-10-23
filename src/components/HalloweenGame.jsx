@@ -4,7 +4,7 @@
 //   닉네임/소속은 Chat 과 같은 localStorage 정체성(nickname.js)을 공유합니다.
 // ─────────────────────────────────────────────────────────────
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { X, Trophy, Pencil } from "lucide-react";
+import { X, Trophy } from "lucide-react";
 import { HALLOWEEN } from "../lib/halloween.js";
 import { createPumpkinGame } from "../lib/halloweenGame.js";
 import { fetchLeaderboard, submitScore, subscribeLeaderboard, currentUserId } from "../lib/halloweenScores.js";
@@ -41,7 +41,6 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
   const [boardLoaded, setBoardLoaded] = useState(false);
   const [myId, setMyId] = useState(null);
   const [identity, setIdentity] = useState(() => (isSupabaseConfigured ? loadIdentity() : { nickname: "", affiliation: "" }));
-  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(identity);
   const identityRef = useRef(identity);
   identityRef.current = identity;
@@ -97,17 +96,26 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, phase]);
 
+  // 닉네임·소속 저장 (빈 닉네임은 랜덤으로 다시 채워짐). 바뀐 게 없으면 아무것도 안 함
+  const commitName = () => {
+    const cur = identityRef.current;
+    if (draft.nickname.trim() === cur.nickname && draft.affiliation.trim() === cur.affiliation) return;
+    const next = saveIdentity(draft);
+    identityRef.current = next;
+    setIdentity(next);
+    setDraft(next);
+  };
+
   const start = () => {
+    commitName();
     setPhase("playing");
     gameRef.current?.start();
   };
 
   const saveName = (e) => {
     e.preventDefault();
-    const next = saveIdentity(draft);
-    setIdentity(next);
-    setDraft(next);
-    setEditing(false);
+    commitName();
+    document.activeElement?.blur?.();
   };
 
   return (
@@ -200,51 +208,47 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
 
           {/* 랭킹 + 내 닉네임 */}
           <aside className="flex min-w-0 flex-col gap-3">
-            <div className="rounded-xl p-3.5" style={{ backgroundColor: NIGHT.panel, border: `1px solid ${NIGHT.line}` }}>
-              {editing ? (
-                <form onSubmit={saveName} className="grid gap-2">
+            {/* 랭킹 이름: 닉네임(랜덤 기본값, 수정 가능) + 소속 — 칸을 벗어나면 바로 저장 */}
+            <form onSubmit={saveName} className="grid gap-2.5 rounded-xl p-3.5" style={{ backgroundColor: NIGHT.panel, border: `1px solid ${NIGHT.line}` }}>
+              <p className="text-[12px] font-bold" style={{ color: NIGHT.muted }}>랭킹에 표시될 이름</p>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid min-w-0 gap-1">
+                  <span className="text-[11px]" style={{ color: NIGHT.muted }}>닉네임</span>
                   <input
                     id="hw-nickname"
                     value={draft.nickname}
                     onChange={(e) => setDraft({ ...draft, nickname: e.target.value })}
+                    onBlur={commitName}
+                    disabled={phase === "playing"}
                     maxLength={20}
-                    placeholder="닉네임"
-                    aria-label="닉네임"
-                    className="rounded-lg bg-black/30 px-2.5 py-1.5 text-[14px] outline-none ring-1 ring-white/15 focus:ring-2"
+                    placeholder="예: 애호박"
+                    className="w-full min-w-0 rounded-lg bg-black/30 px-2.5 py-1.5 text-[14px] outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#F27A1A] disabled:opacity-50"
                   />
+                </label>
+                <label className="grid min-w-0 gap-1">
+                  <span className="text-[11px]" style={{ color: NIGHT.muted }}>소속</span>
                   <input
                     id="hw-affiliation"
                     value={draft.affiliation}
                     onChange={(e) => setDraft({ ...draft, affiliation: e.target.value })}
-                    maxLength={20}
-                    placeholder="소속 (선택, 예: 3층 개발팀)"
-                    aria-label="소속"
-                    className="rounded-lg bg-black/30 px-2.5 py-1.5 text-[14px] outline-none ring-1 ring-white/15 focus:ring-2"
-                  />
-                  <button type="submit" className="rounded-lg py-1.5 text-[13px] font-bold" style={{ backgroundColor: NIGHT.pumpkin, color: "#1B0F05" }}>
-                    저장
-                  </button>
-                </form>
-              ) : (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[11px]" style={{ color: NIGHT.muted }}>랭킹에 표시될 이름</p>
-                    <p className="truncate text-[14px] font-bold">
-                      {identity.nickname}
-                      {identity.affiliation && <span className="font-normal" style={{ color: NIGHT.muted }}> · {identity.affiliation}</span>}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setEditing(true)}
+                    onBlur={commitName}
                     disabled={phase === "playing"}
-                    aria-label="닉네임 바꾸기"
-                    className="shrink-0 rounded-lg p-1.5 hover:bg-white/10 disabled:opacity-30"
-                  >
-                    <Pencil size={15} />
-                  </button>
-                </div>
+                    maxLength={20}
+                    placeholder="예: 에봄"
+                    className="w-full min-w-0 rounded-lg bg-black/30 px-2.5 py-1.5 text-[14px] outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#F27A1A] disabled:opacity-50"
+                  />
+                </label>
+              </div>
+              <p className="truncate text-[13px]">
+                <span style={{ color: NIGHT.muted }}>미리보기 </span>
+                <b>{draft.nickname.trim() || identity.nickname}</b>
+                {draft.affiliation.trim() && <span style={{ color: NIGHT.muted }}> · {draft.affiliation.trim()}</span>}
+              </p>
+              {!draft.affiliation.trim() && (
+                <p className="text-[12px] font-semibold" style={{ color: NIGHT.candle }}>상품 수령을 위해 소속을 적어 주세요</p>
               )}
-            </div>
+              <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
+            </form>
 
             <div className="flex min-h-0 flex-1 flex-col rounded-xl" style={{ backgroundColor: NIGHT.panel, border: `1px solid ${NIGHT.line}` }}>
               <h4 className="flex items-center gap-1.5 px-3.5 pb-2 pt-3 text-[14px] font-extrabold">
