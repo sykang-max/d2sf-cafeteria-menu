@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { X, Trophy } from "lucide-react";
-import { HALLOWEEN } from "../lib/halloween.js";
+import { HALLOWEEN, isRankingClosed } from "../lib/halloween.js";
 import { createPumpkinGame } from "../lib/halloweenGame.js";
 import { fetchLeaderboard, submitScore, subscribeLeaderboard, currentUserId } from "../lib/halloweenScores.js";
 import { loadIdentity, saveIdentity } from "../lib/nickname.js";
@@ -24,7 +24,7 @@ const NIGHT = {
 const MEDAL = ["🥇", "🥈", "🥉"];
 
 const SUBMIT_MSG = {
-  closed: "이벤트가 마감되어 기록이 저장되지 않았어요.",
+  closed: "랭킹이 마감되어 이번 기록은 저장되지 않았어요.",
   too_fast: "잠깐! 너무 빨리 다시 제출했어요. 한 판 더 해 주세요.",
   unavailable: "랭킹 서버에 연결하지 못했어요. 잠시 후 다시 해 주세요.",
 };
@@ -77,7 +77,8 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
         setLastScore(score);
         setPhase("done");
         setResult(null);
-        const res = await submitScore(score, identityRef.current);
+        // 마감 후에는 서버에 보내지 않고 바로 안내 (서버도 같은 시각부터 거절)
+        const res = isRankingClosed() ? { error: "closed" } : await submitScore(score, identityRef.current);
         setResult(res);
         if (res.userId) setMyId(res.userId);
         reloadBoard();
@@ -134,7 +135,7 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
         {/* 헤더 */}
         <div className="flex items-center justify-between gap-3 px-5 py-3.5" style={{ borderBottom: `1px solid ${NIGHT.line}` }}>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: NIGHT.muted }}>Halloween Week · 10.26 – 10.31</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: NIGHT.muted }}>Halloween Week</p>
             <h3 className="text-[19px] font-extrabold tracking-tight">🎃 호박 터뜨리기</h3>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -284,7 +285,7 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                 )}
               </ol>
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: NIGHT.muted }}>{HALLOWEEN.footnote}</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: NIGHT.muted }}>{isRankingClosed() ? HALLOWEEN.footnoteClosed : HALLOWEEN.footnote}</p>
           </aside>
         </div>
       </div>
