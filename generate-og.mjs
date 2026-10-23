@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
 import { weeks } from "./src/data/index.js";
 import { weekSpan, defaultWeekId } from "./src/lib/weekDates.js";
 import { BRAND } from "./src/theme.js";
+import { HALLOWEEN } from "./src/lib/halloween.js";
 
 const CORNER_ORDER = ["Korean A", "Korean B", "Snack", "International A", "International B"];
 const CORNER_COLOR = {
@@ -47,7 +48,48 @@ const buildRows = (week) =>
     }),
   }));
 
-const buildHtml = (week, rows) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
+// ── 할로윈 위크 스킨 ── 이벤트 기간(src/lib/halloween.js start~end)에 걸친 주차만 적용.
+//   기간이 끝난 다음 주차부터는 자동으로 기본 디자인. 장식은 SVG로 그려 CI(리눅스, 이모지 폰트 없음)에서도 동일.
+const overlapsHalloween = ({ mon, fri }) => {
+  const s = new Date(HALLOWEEN.start), e = new Date(HALLOWEEN.end);
+  const monStart = new Date(`${ymd(mon)}T00:00:00+09:00`);
+  const friEnd = new Date(`${ymd(fri)}T23:59:59+09:00`);
+  return monStart < e && friEnd >= s;
+};
+const pumpkinSvg = (size, rot = 0) => `<svg width="${size}" height="${size}" viewBox="-50 -56 100 100" style="transform:rotate(${rot}deg)">
+  <ellipse cx="-21" cy="0" rx="31" ry="42" fill="#C85A0E"/><ellipse cx="21" cy="0" rx="31" ry="42" fill="#C85A0E"/>
+  <ellipse cx="0" cy="0" rx="35" ry="42" fill="#F27A1A"/>
+  <path d="M-4 -39 L6 -39 L10 -54 L0 -52 Z" fill="#5E7D3A"/>
+  <path d="M-18 -4 L-7 -4 L-12.5 -17 Z M18 -4 L7 -4 L12.5 -17 Z" fill="#FFD36B"/>
+  <path d="M-21 9 L-14 15 L-8 10 L0 17 L8 10 L14 15 L21 9 Q0 31 -21 9 Z" fill="#FFD36B"/>
+</svg>`;
+const batSvg = (w) => `<svg width="${w}" height="${w * 0.45}" viewBox="-60 -20 120 54">
+  <path d="M0 0 Q-25 -26 -60 -12 Q-47 4 -38 8 Q-28 0 -20 10 Q-12 2 0 12 Q12 2 20 10 Q28 0 38 8 Q47 4 60 -12 Q25 -26 0 0 Z" fill="#1B1426"/>
+  <ellipse cx="0" cy="4" rx="8" ry="12" fill="#1B1426"/>
+</svg>`;
+
+const HALLOWEEN_CSS = `
+  body { background:
+      radial-gradient(760px 360px at 100% -10%, #FDE7D3 0%, rgba(253,231,211,0) 60%),
+      radial-gradient(560px 320px at -6% 116%, #FFF1DC 0%, rgba(255,241,220,0) 58%),
+      #FFFCF8; }
+  .stripe { height:10px; background:repeating-linear-gradient(135deg,#F27A1A 0 18px,#1B1426 18px 36px); }
+  .bar { height:82px; position:relative; }
+  .wk { background:#F27A1A; color:#1B0F05; display:flex; align-items:center; gap:8px; box-shadow:0 8px 20px rgba(200,90,14,.3); }
+  .bats { position:absolute; left:520px; top:10px; display:flex; gap:26px; align-items:flex-start; opacity:.9; }
+  .bats svg:nth-child(2) { margin-top:22px; }
+  .hero { justify-content:space-between; align-items:center; }
+  .hero .l { display:flex; align-items:baseline; gap:13px; }
+  .hero .t { display:flex; align-items:center; gap:8px; }
+  .event { display:flex; align-items:center; gap:10px; background:#1B1426; color:#F1EADF; border-radius:999px;
+    padding:7px 18px 7px 10px; font-size:15px; font-weight:800; box-shadow:0 8px 20px rgba(27,20,38,.25); }
+  .event em { font-style:normal; color:#FFD36B; }
+  .event small { font-size:13px; font-weight:600; color:#A899BB; }
+  .foot b { color:#C85A0E; }
+  .deco { position:absolute; opacity:.95; }
+`;
+
+const buildHtml = (week, rows, hw = false) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -91,18 +133,27 @@ const buildHtml = (week, rows) => `<!doctype html><html lang="ko"><head><meta ch
   .foot { position:absolute; bottom:18px; left:44px; right:44px; display:flex;
     justify-content:space-between; align-items:center; font-size:14px; font-weight:600; color:#b6b2ab; }
   .foot b { color:${BRAND.green}; }
+  ${hw ? HALLOWEEN_CSS : ""}
 </style></head><body>
+  ${hw ? `<div class="stripe"></div>` : ""}
   <div class="bar">
     <div class="brand">
       <span class="logo"><img src="data:image/png;base64,${logoB64}" alt="D2SF"/></span>
       <div><h1>카페테리아 주간 메뉴</h1><p>D2SF Cafeteria</p></div>
     </div>
-    <span class="wk">${week.label}</span>
+    ${hw ? `<div class="bats">${batSvg(54)}${batSvg(40)}${batSvg(48)}</div>` : ""}
+    <span class="wk">${hw ? pumpkinSvg(26) : ""}${week.label}</span>
   </div>
-  <div class="hero">
+  ${hw ? `<div class="hero">
+    <div class="l">
+      <span class="t">${pumpkinSvg(34, -8)} 할로윈 위크 메뉴</span>
+      <span class="r">${week.range}</span>
+    </div>
+    <span class="event">${pumpkinSvg(24, 6)}<em>호박 터뜨리기</em> 랭킹전 <small>10/29(목) 12:00 마감</small></span>
+  </div>` : `<div class="hero">
     <span class="t">🍱 이번 주 메뉴</span>
     <span class="r">${week.range}</span>
-  </div>
+  </div>`}
   <div class="table">
     ${rows.map((r) => `
       <div class="corner"><span class="dot" style="background:${r.color}"></span>${r.corner}</div>
@@ -115,7 +166,7 @@ const buildHtml = (week, rows) => `<!doctype html><html lang="ko"><head><meta ch
       </div>`).join("")}
     `).join("")}
   </div>
-  <div class="foot"><span>코너별 요일 대표메뉴</span><span><b>what2eat-d2sf.vercel.app</b></span></div>
+  <div class="foot"><span>코너별 요일 대표메뉴${hw ? " · 메뉴 페이지에서 호박 게임 진행 중" : ""}</span><span><b>what2eat-d2sf.vercel.app</b></span></div>
 </body></html>`;
 
 // 로컬 시간대 기준 YYYY-MM-DD (toISOString은 UTC로 밀리므로 쓰지 않음)
@@ -130,7 +181,8 @@ await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
 const manifest = [];
 for (const week of weeks) {
   const rows = buildRows(week);
-  await page.setContent(buildHtml(week, rows), { waitUntil: "load" });
+  const hw = overlapsHalloween(weekSpan(week));
+  await page.setContent(buildHtml(week, rows, hw), { waitUntil: "load" });
   await page.evaluate(async () => { try { await document.fonts.ready; } catch {} });
   await new Promise((r) => setTimeout(r, 400));
 
@@ -141,7 +193,7 @@ for (const week of weeks) {
   manifest.push({ id: week.id, label: week.label, range: week.range, mon: ymd(mon), fri: ymd(fri), file });
 
   const specials = rows.flatMap((r) => r.cells).filter((c) => c.special).length;
-  console.log(`  ${week.label.padEnd(9)} ${ymd(mon)}~${ymd(fri)} → public/${file} (Special ${specials}칸)`);
+  console.log(`  ${week.label.padEnd(9)} ${ymd(mon)}~${ymd(fri)} → public/${file} (Special ${specials}칸)${hw ? " 🎃" : ""}`);
 }
 await browser.close();
 
