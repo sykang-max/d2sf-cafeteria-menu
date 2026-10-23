@@ -12,7 +12,7 @@ export const HALLOWEEN = {
   //   supabase/halloween.sql 의 submit_halloween_score 마감 시각과 같은 값이어야 합니다.
   rankingClose: "2026-10-29T12:00:00+09:00",
   // 마감 후 최종 결과 화면의 1~3위 상품
-  prizes: ["5만원 상품권", "3만원 상품권", "1만원 상품권"],
+  prizes: ["5만원 상품권", "3만원 상품권", "2만원 상품권"],
   // 한 판 길이(초). 바꾸면 supabase/halloween.sql 의 연속 제출 간격(15초)보다 길게 유지하세요.
   gameSeconds: 30,
   // 게임 창 하단 안내 문구 (마감 전 / 마감 후)
