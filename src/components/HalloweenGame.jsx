@@ -22,6 +22,7 @@ const NIGHT = {
 };
 
 const MEDAL = ["🥇", "🥈", "🥉"];
+const BOARD_SIZE = 20; // 화면에 보여줄 랭킹 줄 수
 
 const SUBMIT_MSG = {
   closed: "랭킹이 마감되어 이번 기록은 저장되지 않았어요.",
@@ -35,6 +36,8 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
   const scoreRef = useRef(null);
   const timeRef = useRef(null);
   const [phase, setPhase] = useState("ready"); // ready | playing | done
+  // 창을 연 시점에 랭킹이 마감됐으면 최종 결과 모드 (마감 후 게임은 기록 없이 "그냥 한 판")
+  const [closed] = useState(() => isRankingClosed());
   const [lastScore, setLastScore] = useState(0);
   const [result, setResult] = useState(null); // { best, rank } | { error }
   const [board, setBoard] = useState([]);
@@ -45,9 +48,12 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
   const identityRef = useRef(identity);
   identityRef.current = identity;
 
+  // 랭킹 전체(닉네임·소속 기준 1인 1줄)를 다시 읽고 반환
   const reloadBoard = useCallback(async () => {
-    setBoard(await fetchLeaderboard());
+    const list = await fetchLeaderboard();
+    setBoard(list);
     setBoardLoaded(true);
+    return list;
   }, []);
 
   // 랭킹 로드 + 실시간 구독 (변동이 몰리면 0.8초 모아서 한 번만 다시 읽기)
@@ -79,9 +85,17 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
         setResult(null);
         // 마감 후에는 서버에 보내지 않고 바로 안내 (서버도 같은 시각부터 거절)
         const res = isRankingClosed() ? { error: "closed" } : await submitScore(score, identityRef.current);
-        setResult(res);
         if (res.userId) setMyId(res.userId);
-        reloadBoard();
+        const list = await reloadBoard();
+        if (!res.error) {
+          // 순위·최고점은 1인 1줄로 합친 랭킹 기준 (다른 기기에서 낸 더 높은 점수도 반영)
+          const i = list.findIndex((r) => r.userIds.includes(res.userId));
+          if (i >= 0) {
+            res.rank = i + 1;
+            res.best = list[i].best_score;
+          }
+        }
+        setResult(res);
       },
     });
     gameRef.current = game;
@@ -163,12 +177,20 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
           <div className="flex min-w-0 flex-col gap-2">
             <div className="relative overflow-hidden rounded-xl" style={{ border: `1px solid ${NIGHT.line}`, background: "linear-gradient(180deg,#1C1428 0%,#2A1C22 100%)" }}>
               <canvas ref={canvasRef} className="block h-[340px] w-full touch-manipulation sm:h-[400px]" style={{ cursor: "crosshair" }} />
-              <div className="pointer-events-none absolute inset-x-3 top-2.5 flex justify-between text-[15px] font-extrabold tabular-nums" style={{ textShadow: "0 1px 4px #000" }}>
+              <div
+                className={`pointer-events-none absolute inset-x-3 top-2.5 flex justify-between text-[15px] font-extrabold tabular-nums ${closed && phase === "ready" ? "invisible" : ""}`}
+                style={{ textShadow: "0 1px 4px #000" }}
+              >
                 <span ref={scoreRef}>0점</span>
                 <span ref={timeRef}>{HALLOWEEN.gameSeconds.toFixed(1)}초</span>
               </div>
 
-              {phase !== "playing" && (
+              {/* 랭킹 마감 후: 게임 대신 최종 결과 시상대 */}
+              {closed && phase === "ready" && (
+                <FinalPodium top3={board.slice(0, 3)} loaded={boardLoaded} onPlay={start} />
+              )}
+
+              {phase !== "playing" && !(closed && phase === "ready") && (
                 <div className="absolute inset-0 grid place-content-center justify-items-center gap-3 p-4 text-center" style={{ backgroundColor: "rgba(22,17,31,0.74)" }}>
                   {phase === "ready" ? (
                     <>
@@ -197,6 +219,15 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                   >
                     {phase === "ready" ? "게임 시작" : "다시 하기"}
                   </button>
+                  {closed && phase === "done" && (
+                    <button
+                      onClick={() => setPhase("ready")}
+                      className="rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2"
+                      style={{ border: `1px solid ${NIGHT.line}`, outlineColor: NIGHT.candle }}
+                    >
+                      🏆 최종 결과 보기
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -209,7 +240,8 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
 
           {/* 랭킹 + 내 닉네임 */}
           <aside className="flex min-w-0 flex-col gap-3">
-            {/* 랭킹 이름: 닉네임(랜덤 기본값, 수정 가능) + 소속 — 칸을 벗어나면 바로 저장 */}
+            {/* 랭킹 이름: 닉네임(랜덤 기본값, 수정 가능) + 소속 — 칸을 벗어나면 바로 저장. 마감 후에는 숨김 */}
+            {!closed && (
             <form onSubmit={saveName} className="grid gap-2.5 rounded-xl p-3.5" style={{ backgroundColor: NIGHT.panel, border: `1px solid ${NIGHT.line}` }}>
               <p className="text-[12px] font-bold" style={{ color: NIGHT.muted }}>랭킹에 표시될 이름</p>
               <div className="grid grid-cols-2 gap-2">
@@ -250,11 +282,12 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
               )}
               <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
             </form>
+            )}
 
             <div className="flex min-h-0 flex-1 flex-col rounded-xl" style={{ backgroundColor: NIGHT.panel, border: `1px solid ${NIGHT.line}` }}>
               <h4 className="flex items-center gap-1.5 px-3.5 pb-2 pt-3 text-[14px] font-extrabold">
                 <Trophy size={15} style={{ color: NIGHT.candle }} /> 전 직원 랭킹
-                <span className="ml-auto text-[11px] font-medium" style={{ color: NIGHT.muted }}>실시간</span>
+                <span className="ml-auto text-[11px] font-medium" style={{ color: closed ? NIGHT.candle : NIGHT.muted }}>{closed ? "최종" : "실시간"}</span>
               </h4>
               <ol className="max-h-[300px] overflow-y-auto px-2 pb-2 md:max-h-none md:flex-1">
                 {!boardLoaded ? (
@@ -262,8 +295,8 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                 ) : board.length === 0 ? (
                   <li className="px-2 py-6 text-center text-[13px]" style={{ color: NIGHT.muted }}>아직 기록이 없어요. 첫 번째 호박 사냥꾼이 되어 보세요!</li>
                 ) : (
-                  board.map((r, i) => {
-                    const mine = myId && r.user_id === myId;
+                  board.slice(0, BOARD_SIZE).map((r, i) => {
+                    const mine = myId && r.userIds.includes(myId);
                     return (
                       <li
                         key={r.user_id}
@@ -285,9 +318,70 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                 )}
               </ol>
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: NIGHT.muted }}>{isRankingClosed() ? HALLOWEEN.footnoteClosed : HALLOWEEN.footnote}</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: NIGHT.muted }}>{closed ? HALLOWEEN.footnoteClosed : HALLOWEEN.footnote}</p>
           </aside>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 랭킹 마감 후 최종 결과 시상대 ── 2위 · 1위 · 3위 순서로 단상 높이를 다르게
+const PODIUM = [
+  { rank: 1, color: "#FFD36B", height: 84, medal: 40 }, // 금
+  { rank: 2, color: "#CFC8DC", height: 64, medal: 30 }, // 은
+  { rank: 3, color: "#D9925A", height: 50, medal: 30 }, // 동
+];
+const PODIUM_ORDER = [1, 0, 2];
+
+function FinalPodium({ top3, loaded, onPlay }) {
+  return (
+    <div
+      className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4 text-center"
+      style={{ background: "radial-gradient(ellipse at 50% 35%, rgba(242,122,26,0.22), transparent 60%), rgba(22,17,31,0.94)" }}
+    >
+      <div>
+        <p className="text-[11px] font-bold tracking-[0.12em]" style={{ color: NIGHT.muted }}>10/29(목) 12:00 마감</p>
+        <h4 className="text-[24px] font-extrabold tracking-tight">🏆 최종 결과</h4>
+      </div>
+
+      {!loaded ? (
+        <p className="text-[13px]" style={{ color: NIGHT.muted }}>불러오는 중…</p>
+      ) : (
+        <ol className="grid w-full max-w-[520px] grid-cols-3 items-end gap-2 sm:gap-3" aria-label="최종 1~3위">
+          {PODIUM_ORDER.map((i) => {
+            const p = PODIUM[i];
+            const r = top3[i];
+            return (
+              <li key={p.rank} className="flex min-w-0 flex-col items-center gap-1">
+                <span aria-hidden="true" style={{ fontSize: p.medal, lineHeight: 1 }}>{MEDAL[i]}</span>
+                <p className="w-full truncate text-[14px] font-extrabold sm:text-[15px]">{r?.nickname ?? "—"}</p>
+                <p className="w-full truncate text-[12px]" style={{ color: NIGHT.muted }}>{r?.affiliation || " "}</p>
+                <div
+                  className="flex w-full flex-col items-center gap-0.5 rounded-t-lg pt-2"
+                  style={{ height: p.height, background: `linear-gradient(180deg, ${p.color}33 0%, ${p.color}0D 100%)`, borderTop: `3px solid ${p.color}` }}
+                >
+                  <span className="text-[20px] font-black leading-none tabular-nums" style={{ color: p.color }}>
+                    {r ? r.best_score : "-"}
+                    <span className="ml-0.5 text-[11px] font-bold">점</span>
+                  </span>
+                  <span className="text-[11px] font-bold leading-tight">{HALLOWEEN.prizes[i]}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      <div className="grid justify-items-center gap-1">
+        <button
+          onClick={onPlay}
+          className="rounded-lg px-4 py-1.5 text-[13px] font-semibold transition-colors hover:bg-white/10 active:scale-95 focus-visible:outline focus-visible:outline-2"
+          style={{ border: `1px solid ${NIGHT.line}`, outlineColor: NIGHT.candle }}
+        >
+          🎃 그냥 한 판 하기
+        </button>
+        <p className="text-[11px]" style={{ color: NIGHT.muted }}>마감 후 기록은 랭킹에 반영되지 않아요</p>
       </div>
     </div>
   );
