@@ -1,10 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, X, CalendarDays, CalendarCheck, LayoutList, Flame, Info, UtensilsCrossed, Feather, Beef, Trophy } from "lucide-react";
+import { Search, X, CalendarDays, CalendarCheck, LayoutList, Flame, Info, UtensilsCrossed, Feather, Beef } from "lucide-react";
 import { CUISINE, TAG, MEALS, BRAND } from "../theme.js";
 import { todayOf } from "../lib/weekDates.js";
-import ItemReview from "./ItemReview.jsx";
-import RankingPanel from "./RankingPanel.jsx";
-import { useReviews } from "../context/ReviewsContext.jsx";
 
 /**
  * 카페테리아 주간 메뉴 (프레젠테이션 컴포넌트)
@@ -17,10 +14,6 @@ import { useReviews } from "../context/ReviewsContext.jsx";
 const KCAL_SCALE = 2 / 3;
 const kcal = (k) => Math.round(k * KCAL_SCALE);
 const sum = (items) => items.reduce((s, [, k]) => s + kcal(k), 0);
-
-// 식단(세트) 단위 평가 키 — "대표메뉴(첫 항목)"만 사용합니다. 코너/요일과 무관하게
-// 대표메뉴 이름으로 평점이 누적되고, 같은 메뉴가 다음 주 다시 나와도 같은 키로 쌓입니다.
-const setReviewKey = (s) => s.items?.[0]?.[0] ?? "";
 
 // 현재 시각(브라우저 로컬 기준)에 해당하는 끼니를 추정합니다.
 //   ~10:30 조식 · 10:30~14:30 중식 · 그 이후 석식
@@ -56,7 +49,7 @@ function CuisineTag({ c }) {
   );
 }
 
-function SetCard({ s, showKcal, reviewKey }) {
+function SetCard({ s, showKcal }) {
   const total = sum(s.items);
   const t = s.tag ? TAG[s.tag] : null;
   return (
@@ -70,16 +63,12 @@ function SetCard({ s, showKcal, reviewKey }) {
           </div>
           {s.price > 0 && <p className="mt-0.5 text-[11px] text-stone-400">{s.price.toLocaleString()}원</p>}
         </div>
-        {/* 총 칼로리 배지 옆에 식단(세트) 단위 평가 칩을 나란히 배치 */}
-        <div className="flex shrink-0 items-center gap-1.5">
-          {showKcal && !s.side && (
-            <span className="rounded-lg px-2 py-1 font-mono text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
-              {total}
-              <span className="text-[9px] font-normal">kcal</span>
-            </span>
-          )}
-          {reviewKey && <ItemReview dish={reviewKey} />}
-        </div>
+        {showKcal && !s.side && (
+          <span className="shrink-0 rounded-lg px-2 py-1 font-mono text-[12px] font-bold" style={{ backgroundColor: BRAND.greenSoft, color: BRAND.greenDark }}>
+            {total}
+            <span className="text-[9px] font-normal">kcal</span>
+          </span>
+        )}
       </div>
       <div className="mt-2 space-y-0.5">
         {s.items.map(([n, k], i) => (
@@ -112,8 +101,6 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
   // 랜딩 기본 화면: 이번 주면 '오늘', 다른 주차면 '요일별'(그 주에는 오늘이 없으므로)
   const [view, setView] = useState(() => (todayInWeek ? "today" : "day"));
   const showKcal = true; // kcal은 선택이 아니라 항상 표시 (토글 제거)
-  const [showRanking, setShowRanking] = useState(false);
-  const { configured: reviewsOn } = useReviews();
 
   // 주차가 바뀌면 검색어를 초기화하고(선택한 메뉴가 새 주차에 없을 수 있으므로)
   // 보기도 그 주차에 맞게 되돌립니다.
@@ -252,16 +239,6 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                 </button>
               ))}
             </div>
-            {reviewsOn && (
-              <button
-                onClick={() => setShowRanking(true)}
-                className="flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
-                style={{ borderColor: "#e7e5e4", backgroundColor: "#fff", color: BRAND.greenDark, outlineColor: BRAND.green }}
-                title="역대 최고 평점 식단"
-              >
-                <Trophy size={13} style={{ color: BRAND.yellow }} /> 랭킹
-              </button>
-            )}
           </div>
         </div>
 
@@ -299,7 +276,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {todaySets.map((s, i) => (
-                    <SetCard key={i} s={s} showKcal={showKcal} reviewKey={setReviewKey(s)} />
+                    <SetCard key={i} s={s} showKcal={showKcal} />
                   ))}
                 </div>
               </div>
@@ -340,7 +317,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sets.map((s, i) => (
-                      <SetCard key={i} s={s} showKcal={showKcal} reviewKey={setReviewKey(s)} />
+                      <SetCard key={i} s={s} showKcal={showKcal} />
                     ))}
                   </div>
                 </div>
@@ -369,7 +346,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                   <h3 className="mb-2 text-[17px] font-extrabold text-stone-900">{cn}</h3>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sets.map((s, i) => (
-                      <SetCard key={i} s={{ ...s, corner: `${s.day}요일` }} showKcal={showKcal} reviewKey={setReviewKey(s)} />
+                      <SetCard key={i} s={{ ...s, corner: `${s.day}요일` }} showKcal={showKcal} />
                     ))}
                   </div>
                 </div>
@@ -390,10 +367,7 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
                     <CuisineTag c={c} />
                     <span className="truncate text-[13px] text-stone-700">{n}</span>
                   </div>
-                  <span className="flex shrink-0 items-center gap-1.5">
-                    {showKcal && <span className="shrink-0 font-mono text-[11px] text-stone-300">{kcal(k)}kcal</span>}
-                    <ItemReview dish={n} />
-                  </span>
+                  {showKcal && <span className="shrink-0 font-mono text-[11px] text-stone-300">{kcal(k)}kcal</span>}
                 </div>
               ))}
             </div>
@@ -406,7 +380,6 @@ export default function WeeklyLunchMenu({ week, relation = "current" }) {
         </footer>
         <p className="mt-3 text-center text-[11px] text-stone-400">© 2026 Seoyoon Kang · evom.ai</p>
       </div>
-      {reviewsOn && <RankingPanel open={showRanking} onClose={() => setShowRanking(false)} />}
     </div>
   );
 }
