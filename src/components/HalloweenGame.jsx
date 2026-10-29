@@ -202,13 +202,13 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                   ) : (
                     <>
                       <p className="text-[13px] font-bold" style={{ color: NIGHT.muted }}>이번 판</p>
-                      <p className="text-[56px] font-black leading-none tabular-nums" style={{ color: NIGHT.candle }}>{lastScore}</p>
+                      <p className="text-[56px] font-black leading-none tabular-nums" style={{ color: NIGHT.candle }}>{lastScore.toLocaleString()}</p>
                       <p className="min-h-[1.5em] text-[14px]" aria-live="polite">
                         {!result
                           ? "기록 저장 중…"
                           : result.error
                             ? SUBMIT_MSG[result.error]
-                            : `내 최고 ${result.best}점 · 현재 ${result.rank ?? "-"}위`}
+                            : `내 최고 ${result.best?.toLocaleString()}점 · 현재 ${result.rank ?? "-"}위`}
                       </p>
                     </>
                   )}
@@ -311,7 +311,7 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                           {r.affiliation && <span style={{ color: NIGHT.muted }}> · {r.affiliation}</span>}
                           {mine && <span className="ml-1 text-[11px] font-bold" style={{ color: NIGHT.pumpkin }}>나</span>}
                         </span>
-                        <span className="shrink-0 font-extrabold tabular-nums">{r.best_score}</span>
+                        <span className="shrink-0 font-extrabold tabular-nums">{r.best_score.toLocaleString()}</span>
                       </li>
                     );
                   })

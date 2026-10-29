@@ -4,9 +4,10 @@
 --
 --   사람(익명 로그인 user_id)당 1행, 최고 점수만 남깁니다.
 --   테이블에 직접 쓰는 권한은 주지 않고, submit_halloween_score() 로만 기록합니다.
---     · 점수 범위 0~140 (30초 완벽 플레이 시뮬레이션 200만 판 최고 138점 → 정상 기록은 막지 않음)
+--     · 점수는 0 이상이면 상한 없음 (10/29 오후 "끝판 전쟁": AI·자동화 등 수단 무제한)
+--       1차(~10/29 12:00)는 0~140 상한이었고, 1차 기록은 halloween_scores_round1 에 백업돼 있습니다.
 --     · 같은 사람이 15초 안에 다시 제출하면 거절 (게임 한 판이 30초)
---     · 2026-10-29 12:00 KST(최종 집계) 이후 제출 거절 (src/lib/halloween.js 의 rankingClose 와 같은 값)
+--     · 2026-11-01 00:00 KST(끝판 전쟁 마감) 이후 제출 거절 (src/lib/halloween.js 의 rankingClose 와 같은 값)
 --   ※ 점수는 브라우저에서 계산되므로 개발자도구로 조작하는 것까지 막지는 못합니다.
 --     이상한 기록이 보이면 해당 행을 지우면 됩니다.
 -- ═════════════════════════════════════════════════════════════
@@ -15,7 +16,7 @@ create table if not exists public.halloween_scores (
   user_id        uuid primary key references auth.users (id) on delete cascade,
   nickname       text not null check (char_length(nickname) between 1 and 20),
   affiliation    text check (affiliation is null or char_length(affiliation) <= 20),
-  best_score     int  not null check (best_score between 0 and 200),  -- 제출 상한은 RPC 에서 140
+  best_score     int  not null check (best_score >= 0),
   plays          int  not null default 1,
   best_at        timestamptz not null default now(),   -- 최고점 달성 시각 (동점 정렬용)
   last_played_at timestamptz not null default now()
@@ -53,10 +54,10 @@ begin
   if uid is null then
     raise exception 'not signed in';
   end if;
-  if now() >= timestamptz '2026-10-29 12:00:00+09' then
+  if now() >= timestamptz '2026-11-01 00:00:00+09' then
     raise exception 'event closed';
   end if;
-  if p_score is null or p_score < 0 or p_score > 140 then
+  if p_score is null or p_score < 0 then
     raise exception 'invalid score';
   end if;
   if nick = '' then
@@ -105,3 +106,8 @@ end $$;
 -- ── 오픈 직전 초기화 ──
 --   미리보기(?halloween=1)로 테스트한 기록을 지우려면 10/26 오픈 직전에 아래 한 줄을 실행하세요.
 -- truncate table public.halloween_scores;
+
+-- ── 끝판 전쟁 전환 (10/29 오후, 1회만 실행) ──
+--   기존 테이블의 best_score 상한(0~200) 제약을 풀려면 아래를 실행하세요.
+-- alter table public.halloween_scores drop constraint if exists halloween_scores_best_score_check;
+-- alter table public.halloween_scores add constraint halloween_scores_best_score_check check (best_score >= 0);
