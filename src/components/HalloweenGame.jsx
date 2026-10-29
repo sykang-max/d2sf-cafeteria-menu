@@ -91,7 +91,7 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
           // 순위·최고점은 1인 1줄로 합친 랭킹 기준 (다른 기기에서 낸 더 높은 점수도 반영)
           const i = list.findIndex((r) => r.userIds.includes(res.userId));
           if (i >= 0) {
-            res.rank = i + 1;
+            res.rank = list[i].rank;
             res.best = list[i].best_score;
           }
         }
@@ -303,8 +303,8 @@ export default function HalloweenGame({ onClose, fxOn, onToggleFx }) {
                         className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13.5px]"
                         style={mine ? { backgroundColor: "rgba(242,122,26,0.18)", boxShadow: `inset 0 0 0 1px ${NIGHT.pumpkin}` } : undefined}
                       >
-                        <span className="w-7 shrink-0 text-center font-extrabold tabular-nums" style={{ color: i < 3 ? NIGHT.candle : NIGHT.muted }}>
-                          {MEDAL[i] ?? i + 1}
+                        <span className="w-7 shrink-0 text-center font-extrabold tabular-nums" style={{ color: r.rank <= 3 ? NIGHT.candle : NIGHT.muted }}>
+                          {MEDAL[r.rank - 1] ?? r.rank}
                         </span>
                         <span className="min-w-0 flex-1 truncate">
                           {r.nickname}
