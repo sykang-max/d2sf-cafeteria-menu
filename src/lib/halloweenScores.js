@@ -14,8 +14,9 @@ const personKey = (r) =>
   [r.nickname, r.affiliation || ""].map((s) => s.trim().replace(/\s+/g, " ").toLowerCase()).join("\u0000");
 
 /**
- * 전체 랭킹 (최고점 내림차순, 동점이면 먼저 달성한 사람이 위), 닉네임·소속 기준 1인 1줄.
+ * 전체 랭킹 (최고점 내림차순), 닉네임·소속 기준 1인 1줄.
  * 각 줄의 userIds 에는 합쳐진 모든 user_id 가 들어 있어 "나" 표시에 씁니다.
+ * rank 는 공동 순위 (같은 점수면 같은 순위 · 1,1,1,4 …). 목록 순서는 먼저 달성한 사람이 위.
  */
 export async function fetchLeaderboard() {
   if (!supabase) return [];
@@ -39,7 +40,11 @@ export async function fetchLeaderboard() {
     if (hit) hit.userIds.push(r.user_id);
     else byPerson.set(key, { ...r, userIds: [r.user_id] });
   }
-  return [...byPerson.values()];
+  const list = [...byPerson.values()];
+  list.forEach((r, i) => {
+    r.rank = i > 0 && r.best_score === list[i - 1].best_score ? list[i - 1].rank : i + 1;
+  });
+  return list;
 }
 
 /**
