@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Sparkles, X, Megaphone, MessageCircle } from "lucide-react";
 import { BRAND } from "../theme.js";
+import { isChristmasSeason } from "../lib/season.js";
 
 // 주차별로 순환하는 환영 메시지 (한 주에 한 번만 노출)
 const MESSAGES = [
@@ -25,6 +26,12 @@ const UPDATE = {
   ],
 };
 
+// ── 크리스마스 환영(산타) ──
+// 시즌(isChristmasSeason) 중 방문자당 1회만 노출. 돌아온 방문자도 한 번 받도록
+// 전용 seen 키 + 버전을 둡니다(버전을 올리면 다시 1회 노출). 시즌이 끝나면 자동으로 평소 팝업.
+const XMAS_WELCOME_SEEN_KEY = "what2eat-xmas-welcome-seen";
+const XMAS_WELCOME_VERSION = "2026-xmas-santa-v1";
+
 // 연중 주 번호 계산 (원본 스니펫 로직 유지)
 function getWeekNumber(date) {
   const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
@@ -37,10 +44,21 @@ export default function WelcomePopup() {
   const [show, setShow] = useState(false); // 진입/퇴장 애니메이션용
   const [mode, setMode] = useState("welcome"); // 'update' | 'welcome'
   const [message, setMessage] = useState("");
+  const [christmas, setChristmas] = useState(false); // 크리스마스 환영 변형 여부
 
-  // 마운트 시: 업데이트 공지를 아직 못 봤으면 공지 우선, 아니면 주간 인사(주 1회).
+  // 마운트 시: (0) 크리스마스 환영 → (1) 업데이트 공지 → (2) 주간 인사 순으로 1회 노출.
   useEffect(() => {
     try {
+      // 0) 크리스마스 환영(산타) — 시즌 중, 방문자당 1회(돌아온 방문자 포함) 우선 노출
+      if (isChristmasSeason() && localStorage.getItem(XMAS_WELCOME_SEEN_KEY) !== XMAS_WELCOME_VERSION) {
+        setChristmas(true);
+        setMode("welcome");
+        setOpen(true);
+        localStorage.setItem(XMAS_WELCOME_SEEN_KEY, XMAS_WELCOME_VERSION);
+        // 같은 주 일반 인사 중복 방지
+        localStorage.setItem("popupLastShownWeek", String(getWeekNumber(new Date())));
+        return;
+      }
       // 1) 업데이트 공지 (방문자당 1회)
       if (localStorage.getItem("what2eat-update-seen") !== UPDATE_VERSION) {
         setMode("update");
@@ -152,6 +170,35 @@ export default function WelcomePopup() {
               style={{ backgroundColor: BRAND.green, boxShadow: "0 4px 12px -2px rgba(0,140,21,0.35)", outlineColor: BRAND.green }}
             >
               둘러보기 👀
+            </button>
+          </>
+        ) : christmas ? (
+          <>
+            {/* 은은한 눈/반짝임 소품 (정적 · 과하지 않게) */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+              <span className="absolute left-5 top-6 text-[15px]" style={{ color: BRAND.green, opacity: 0.4 }}>❄</span>
+              <span className="absolute right-7 top-9 text-[12px]" style={{ color: "#D32F2F", opacity: 0.4 }}>✦</span>
+              <span className="absolute left-9 bottom-9 text-[12px]" style={{ color: "#C99A2E", opacity: 0.45 }}>✦</span>
+              <span className="absolute right-6 bottom-12 text-[15px]" style={{ color: BRAND.green, opacity: 0.35 }}>❆</span>
+            </div>
+
+            {/* 산타 메인 포인트 */}
+            <div
+              className="relative mx-auto mb-3 inline-flex h-20 w-20 items-center justify-center rounded-full"
+              style={{ background: "radial-gradient(circle at 50% 32%, #FFF4CC 0%, #E6F4E8 72%)", boxShadow: "0 8px 22px -8px rgba(211,47,47,0.40)" }}
+            >
+              <span className="text-[46px] leading-none">🎅</span>
+            </div>
+            <p className="relative text-[21px] font-extrabold leading-snug tracking-tight text-stone-900">🎄 메리 크리스마스!</p>
+            <p className="relative mt-1.5 text-[15px] font-extrabold" style={{ color: BRAND.green }}>오늘도 맛있게 🎅</p>
+            <p className="relative mt-2 text-[13.5px] text-stone-500">따뜻한 연말, 방문해 주셔서 감사합니다.</p>
+
+            <button
+              onClick={close}
+              className="relative mt-5 w-full rounded-xl px-4 py-2.5 text-[14px] font-bold text-white transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{ backgroundColor: BRAND.green, boxShadow: "0 4px 14px -2px rgba(0,140,21,0.38)", outlineColor: BRAND.green }}
+            >
+              오늘도 맛있게 🎅🎄
             </button>
           </>
         ) : (
