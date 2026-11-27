@@ -30,7 +30,7 @@ const UPDATE = {
 // 시즌(isChristmasSeason) 중 방문자당 1회만 노출. 돌아온 방문자도 한 번 받도록
 // 전용 seen 키 + 버전을 둡니다(버전을 올리면 다시 1회 노출). 시즌이 끝나면 자동으로 평소 팝업.
 const XMAS_WELCOME_SEEN_KEY = "what2eat-xmas-welcome-seen";
-const XMAS_WELCOME_VERSION = "2026-xmas-santa-v1";
+const XMAS_WELCOME_VERSION = "2026-xmas-santa-v2";
 
 // 연중 주 번호 계산 (원본 스니펫 로직 유지)
 function getWeekNumber(date) {
@@ -49,14 +49,18 @@ export default function WelcomePopup() {
   // 마운트 시: (0) 크리스마스 환영 → (1) 업데이트 공지 → (2) 주간 인사 순으로 1회 노출.
   useEffect(() => {
     try {
-      // 0) 크리스마스 환영(산타) — 시즌 중, 방문자당 1회(돌아온 방문자 포함) 우선 노출
+      // 0) 크리스마스 환영 — 시즌 중, 방문자당 1회(돌아온 방문자 포함) 우선 노출.
+      //    문구는 평소 환영 그대로 두고, 배경·소품(산타/루돌프)만 크리스마스 분위기로.
       if (isChristmasSeason() && localStorage.getItem(XMAS_WELCOME_SEEN_KEY) !== XMAS_WELCOME_VERSION) {
+        const wk = getWeekNumber(new Date());
+        const i = (((wk - BASE_WEEK) % MESSAGES.length) + MESSAGES.length) % MESSAGES.length;
+        setMessage(MESSAGES[i]);
         setChristmas(true);
         setMode("welcome");
         setOpen(true);
         localStorage.setItem(XMAS_WELCOME_SEEN_KEY, XMAS_WELCOME_VERSION);
         // 같은 주 일반 인사 중복 방지
-        localStorage.setItem("popupLastShownWeek", String(getWeekNumber(new Date())));
+        localStorage.setItem("popupLastShownWeek", String(wk));
         return;
       }
       // 1) 업데이트 공지 (방문자당 1회)
@@ -120,9 +124,11 @@ export default function WelcomePopup() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full rounded-2xl bg-white p-7 transition-all duration-200 ease-out ${isUpdate ? "max-w-md text-left" : "max-w-sm text-center"}`}
+        className={`relative w-full rounded-2xl p-7 transition-all duration-200 ease-out ${isUpdate ? "max-w-md text-left" : "max-w-sm text-center"}`}
         style={{
-          boxShadow: "0 10px 40px -8px rgba(0,140,21,0.30)",
+          ...(christmas && !isUpdate
+            ? { background: "linear-gradient(160deg,#C62828 0%,#B71C1C 100%)", boxShadow: "0 14px 44px -10px rgba(183,28,28,0.55)" }
+            : { backgroundColor: "#ffffff", boxShadow: "0 10px 40px -8px rgba(0,140,21,0.30)" }),
           opacity: show ? 1 : 0,
           transform: show ? "translateY(0) scale(1)" : "translateY(8px) scale(0.96)",
         }}
@@ -130,8 +136,8 @@ export default function WelcomePopup() {
         <button
           onClick={close}
           aria-label="닫기"
-          className="absolute right-3 top-3 rounded-lg p-1 text-stone-400 transition-transform duration-150 ease-out hover:text-stone-600 active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-          style={{ outlineColor: BRAND.green }}
+          className={`absolute right-3 top-3 rounded-lg p-1 transition-transform duration-150 ease-out active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${christmas && !isUpdate ? "text-white/80 hover:text-white" : "text-stone-400 hover:text-stone-600"}`}
+          style={{ outlineColor: christmas && !isUpdate ? "#ffffff" : BRAND.green }}
         >
           <X size={18} />
         </button>
@@ -174,31 +180,31 @@ export default function WelcomePopup() {
           </>
         ) : christmas ? (
           <>
-            {/* 은은한 눈/반짝임 소품 (정적 · 과하지 않게) */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-              <span className="absolute left-5 top-6 text-[15px]" style={{ color: BRAND.green, opacity: 0.4 }}>❄</span>
-              <span className="absolute right-7 top-9 text-[12px]" style={{ color: "#D32F2F", opacity: 0.4 }}>✦</span>
-              <span className="absolute left-9 bottom-9 text-[12px]" style={{ color: "#C99A2E", opacity: 0.45 }}>✦</span>
-              <span className="absolute right-6 bottom-12 text-[15px]" style={{ color: BRAND.green, opacity: 0.35 }}>❆</span>
+            {/* 은은한 눈 소품 (정적 · 흰색 · 과하지 않게) */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl text-white">
+              <span className="absolute left-5 top-6 text-[14px]" style={{ opacity: 0.5 }}>❄</span>
+              <span className="absolute right-8 top-10 text-[11px]" style={{ opacity: 0.45 }}>❄</span>
+              <span className="absolute left-10 bottom-10 text-[11px]" style={{ opacity: 0.4 }}>❆</span>
+              <span className="absolute right-6 bottom-12 text-[14px]" style={{ opacity: 0.5 }}>❄</span>
             </div>
 
-            {/* 산타 메인 포인트 */}
+            {/* 산타 + 루돌프 비주얼 (문구 없이 분위기만) */}
             <div
-              className="relative mx-auto mb-3 inline-flex h-20 w-20 items-center justify-center rounded-full"
-              style={{ background: "radial-gradient(circle at 50% 32%, #FFF4CC 0%, #E6F4E8 72%)", boxShadow: "0 8px 22px -8px rgba(211,47,47,0.40)" }}
+              className="relative mx-auto mb-3 inline-flex items-center justify-center gap-1 rounded-full bg-white px-3.5 py-2"
+              style={{ boxShadow: "0 8px 22px -8px rgba(0,0,0,0.35)" }}
             >
-              <span className="text-[46px] leading-none">🎅</span>
+              <span className="text-[40px] leading-none">🎅</span>
+              <span className="text-[40px] leading-none">🦌</span>
             </div>
-            <p className="relative text-[21px] font-extrabold leading-snug tracking-tight text-stone-900">🎄 메리 크리스마스!</p>
-            <p className="relative mt-1.5 text-[15px] font-extrabold" style={{ color: BRAND.green }}>오늘도 맛있게 🎅</p>
-            <p className="relative mt-2 text-[13.5px] text-stone-500">따뜻한 연말, 방문해 주셔서 감사합니다.</p>
+            <p className="relative text-[20px] font-extrabold leading-snug tracking-tight text-white">{message}</p>
+            <p className="relative mt-2 text-[14px] text-white/85">방문해 주셔서 감사합니다.</p>
 
             <button
               onClick={close}
-              className="relative mt-5 w-full rounded-xl px-4 py-2.5 text-[14px] font-bold text-white transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{ backgroundColor: BRAND.green, boxShadow: "0 4px 14px -2px rgba(0,140,21,0.38)", outlineColor: BRAND.green }}
+              className="relative mt-5 w-full rounded-xl px-4 py-2.5 text-[14px] font-extrabold transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{ backgroundColor: "#ffffff", color: "#B71C1C", boxShadow: "0 4px 14px -2px rgba(0,0,0,0.30)", outlineColor: "#ffffff" }}
             >
-              오늘도 맛있게 🎅🎄
+              오늘도 맛있게 🍽️
             </button>
           </>
         ) : (
