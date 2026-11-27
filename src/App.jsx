@@ -13,6 +13,8 @@ import { defaultWeekId, weekRelation } from "./lib/weekDates.js";
 import HalloweenFx from "./components/HalloweenFx.jsx";
 import HalloweenGame from "./components/HalloweenGame.jsx";
 import { isHalloweenActive, loadFxPref, saveFxPref } from "./lib/halloween.js";
+import Snowfall from "./components/Snowfall.jsx";
+import { isChristmasSeason } from "./lib/season.js";
 
 export default function App() {
   // 등록 순서(weeks[0])가 아니라 "오늘 날짜가 속한 주차"를 기본으로 엽니다.
@@ -21,6 +23,8 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   // 할로윈 위크(10/26~10/31) — 기간 밖이면 효과·게임 버튼 모두 숨김
   const [halloween] = useState(() => isHalloweenActive());
+  // 크리스마스 시즌(11/27~12/31 KST) — 기간 밖이면 눈·헤더 포인트 자동 숨김
+  const [christmas] = useState(() => isChristmasSeason());
   const [fxOn, setFxOn] = useState(() => loadFxPref());
   const [gameOpen, setGameOpen] = useState(false);
   const toggleFx = () => {
@@ -42,12 +46,14 @@ export default function App() {
         chatEnabled={isSupabaseConfigured}
         onOpenChat={() => setChatOpen(true)}
         halloween={halloween}
+        christmas={christmas}
         onOpenGame={() => setGameOpen(true)}
       />
       <main>
         <WeeklyLunchMenu week={week} relation={relation} />
       </main>
       {halloween && fxOn && <HalloweenFx />}
+      {christmas && <Snowfall />}
       {/* 모바일 전용 플로팅 버튼 (우하단, 아이콘만) — (할로윈 게임) + Chat. 데스크탑은 헤더 버튼 사용 */}
       {!chatOpen && !gameOpen && (halloween || isSupabaseConfigured) && (
         <div className="fixed bottom-5 right-5 z-40 flex items-center gap-3 sm:hidden">
