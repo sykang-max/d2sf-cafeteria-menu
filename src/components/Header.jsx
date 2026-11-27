@@ -8,7 +8,7 @@ import { isCurrentWeek } from "../lib/weekDates.js";
  * 로고(회색 PNG)는 그린 바 위에서 잘 보이도록 흰색 pill 안에 넣습니다.
  * 주차가 2개 이상이면 드롭다운, 1개면 주차 라벨만 노출. 모바일/데스크탑 반응형.
  */
-export default function Header({ weeks, weekId, onWeekChange, chatEnabled = false, onOpenChat, halloween = false, onOpenGame }) {
+export default function Header({ weeks, weekId, onWeekChange, chatEnabled = false, onOpenChat, halloween = false, christmas = false, onOpenGame }) {
   const current = weeks.find((w) => w.id === weekId) ?? weeks[0];
   const multiple = weeks.length > 1;
 
@@ -18,6 +18,10 @@ export default function Header({ weeks, weekId, onWeekChange, chatEnabled = fals
       {halloween && (
         <div aria-hidden="true" className="h-1.5" style={{ background: "repeating-linear-gradient(135deg,#F27A1A 0 12px,#1B1426 12px 24px)" }} />
       )}
+      {/* 크리스마스 시즌: 헤더 위 얇은 캔디케인(빨강·흰) 띠 — 브랜드 그린과 보색 포인트 */}
+      {christmas && !halloween && (
+        <div aria-hidden="true" className="h-1" style={{ background: "repeating-linear-gradient(135deg,#D32F2F 0 10px,#ffffff 10px 20px)" }} />
+      )}
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         {/* 로고 + 타이틀 */}
         <div className="flex items-center gap-3">
@@ -25,7 +29,10 @@ export default function Header({ weeks, weekId, onWeekChange, chatEnabled = fals
             <img src="/d2sf-logo.png" alt="D2SF" className="h-5 w-auto sm:h-6" />
           </span>
           <div className="leading-tight">
-            <h1 className="text-[18px] font-extrabold tracking-tight text-white sm:text-[20px]">카페테리아 주간 메뉴</h1>
+            <h1 className="text-[18px] font-extrabold tracking-tight text-white sm:text-[20px]">
+              카페테리아 주간 메뉴
+              {christmas && <span aria-hidden="true" className="ml-1.5 align-middle text-[16px] sm:text-[18px]">🎄</span>}
+            </h1>
             <p className="text-[11px] font-medium text-white/70">D2SF Cafeteria</p>
           </div>
         </div>
