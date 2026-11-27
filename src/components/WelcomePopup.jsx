@@ -30,7 +30,7 @@ const UPDATE = {
 // 시즌(isChristmasSeason) 중 방문자당 1회만 노출. 돌아온 방문자도 한 번 받도록
 // 전용 seen 키 + 버전을 둡니다(버전을 올리면 다시 1회 노출). 시즌이 끝나면 자동으로 평소 팝업.
 const XMAS_WELCOME_SEEN_KEY = "what2eat-xmas-welcome-seen";
-const XMAS_WELCOME_VERSION = "2026-xmas-santa-v2";
+const XMAS_WELCOME_VERSION = "2026-xmas-santa-v3";
 
 // 연중 주 번호 계산 (원본 스니펫 로직 유지)
 function getWeekNumber(date) {
@@ -124,10 +124,16 @@ export default function WelcomePopup() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full rounded-2xl p-7 transition-all duration-200 ease-out ${isUpdate ? "max-w-md text-left" : "max-w-sm text-center"}`}
+        className={`relative w-full transition-[opacity,transform] duration-200 ease-out ${
+          isUpdate
+            ? "max-w-md rounded-2xl p-7 text-left"
+            : christmas
+            ? "max-w-[22rem] overflow-hidden rounded-[28px]"
+            : "max-w-sm rounded-2xl p-7 text-center"
+        }`}
         style={{
           ...(christmas && !isUpdate
-            ? { background: "linear-gradient(160deg,#C62828 0%,#B71C1C 100%)", boxShadow: "0 14px 44px -10px rgba(183,28,28,0.55)" }
+            ? { backgroundColor: "#ffffff", boxShadow: "0 18px 50px -12px rgba(183,28,28,0.45), 0 0 0 1px rgba(232,184,75,0.40)" }
             : { backgroundColor: "#ffffff", boxShadow: "0 10px 40px -8px rgba(0,140,21,0.30)" }),
           opacity: show ? 1 : 0,
           transform: show ? "translateY(0) scale(1)" : "translateY(8px) scale(0.96)",
@@ -136,7 +142,7 @@ export default function WelcomePopup() {
         <button
           onClick={close}
           aria-label="닫기"
-          className={`absolute right-3 top-3 rounded-lg p-1 transition-transform duration-150 ease-out active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${christmas && !isUpdate ? "text-white/80 hover:text-white" : "text-stone-400 hover:text-stone-600"}`}
+          className={`absolute right-3 top-3 z-20 rounded-lg p-1 transition-transform duration-150 ease-out active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${christmas && !isUpdate ? "text-white/90 hover:text-white" : "text-stone-400 hover:text-stone-600"}`}
           style={{ outlineColor: christmas && !isUpdate ? "#ffffff" : BRAND.green }}
         >
           <X size={18} />
@@ -180,32 +186,69 @@ export default function WelcomePopup() {
           </>
         ) : christmas ? (
           <>
-            {/* 은은한 눈 소품 (정적 · 흰색 · 과하지 않게) */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl text-white">
-              <span className="absolute left-5 top-6 text-[14px]" style={{ opacity: 0.5 }}>❄</span>
-              <span className="absolute right-8 top-10 text-[11px]" style={{ opacity: 0.45 }}>❄</span>
-              <span className="absolute left-10 bottom-10 text-[11px]" style={{ opacity: 0.4 }}>❆</span>
-              <span className="absolute right-6 bottom-12 text-[14px]" style={{ opacity: 0.5 }}>❄</span>
+            {/* ── 레드 히어로: 산타 + 정적 눈/골드 소품 + 눈결 웨이브 ── */}
+            <div className="relative px-6 pt-8" style={{ background: "linear-gradient(170deg,#C62828 0%,#B71C1C 100%)" }}>
+              {/* 정적 눈송이 (애니메이션 없음) */}
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden text-white">
+                <span className="absolute left-4 top-5 text-[15px]" style={{ opacity: 0.55 }}>❄</span>
+                <span className="absolute right-7 top-9 text-[11px]" style={{ opacity: 0.45 }}>❆</span>
+                <span className="absolute left-9 top-20 text-[10px]" style={{ opacity: 0.38 }}>❄</span>
+                <span className="absolute right-11 top-16 text-[13px]" style={{ opacity: 0.5 }}>❄</span>
+              </div>
+              {/* 골드 반짝임 (포인트만) */}
+              <span aria-hidden="true" className="pointer-events-none absolute left-5 top-12 text-[13px]" style={{ color: "#E8B84B", opacity: 0.95 }}>✨</span>
+              <span aria-hidden="true" className="pointer-events-none absolute right-6 top-6 text-[12px]" style={{ color: "#E8B84B", opacity: 0.9 }}>✨</span>
+
+              {/* 산타 컷아웃 (레퍼런스 이미지에서 추출한 투명 PNG) */}
+              <img
+                src="/santa.png"
+                alt="산타"
+                width="152"
+                height="159"
+                className="relative z-10 mx-auto -mb-2 block w-[150px] max-w-[52%] select-none"
+                style={{ filter: "drop-shadow(0 10px 16px rgba(0,0,0,0.28))" }}
+              />
+
+              {/* 눈 쌓인 웨이브 구분선 (레퍼런스 시그니처) */}
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 400 44"
+                preserveAspectRatio="none"
+                className="relative z-0 -mb-px block w-[calc(100%+3rem)] -mx-6"
+                style={{ height: "30px" }}
+              >
+                <path d="M0,24 C38,8 78,8 118,21 C158,34 198,34 238,21 C278,8 318,8 358,21 C378,27 392,27 400,23 L400,44 L0,44 Z" fill="#ffffff" />
+              </svg>
             </div>
 
-            {/* 산타 + 루돌프 비주얼 (문구 없이 분위기만) */}
-            <div
-              className="relative mx-auto mb-3 inline-flex items-center justify-center gap-1 rounded-full bg-white px-3.5 py-2"
-              style={{ boxShadow: "0 8px 22px -8px rgba(0,0,0,0.35)" }}
-            >
-              <span className="text-[40px] leading-none">🎅</span>
-              <span className="text-[40px] leading-none">🦌</span>
-            </div>
-            <p className="relative text-[20px] font-extrabold leading-snug tracking-tight text-white">{message}</p>
-            <p className="relative mt-2 text-[14px] text-white/85">방문해 주셔서 감사합니다.</p>
+            {/* ── 화이트 본문 ── */}
+            <div className="relative bg-white px-7 pb-7 pt-2 text-center">
+              {/* 장식 오너먼트 점: 레드 · 그린 · 골드 (문구 없이 밸런스만) */}
+              <div aria-hidden="true" className="mb-3 flex items-center justify-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#C62828" }} />
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#0F7A2E" }} />
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#E8B84B" }} />
+              </div>
 
-            <button
-              onClick={close}
-              className="relative mt-5 w-full rounded-xl px-4 py-2.5 text-[14px] font-extrabold transition-transform duration-150 ease-out active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{ backgroundColor: "#ffffff", color: "#B71C1C", boxShadow: "0 4px 14px -2px rgba(0,0,0,0.30)", outlineColor: "#ffffff" }}
-            >
-              오늘도 맛있게 🍽️
-            </button>
+              <p className="text-[20px] font-extrabold leading-snug text-stone-900" style={{ letterSpacing: "-0.02em" }}>{message}</p>
+              <p className="mt-2 text-[14px] text-stone-500">방문해 주셔서 감사합니다.</p>
+
+              {/* 골드 헤어라인 디바이더 */}
+              <div
+                aria-hidden="true"
+                className="mx-auto my-4 h-px w-16"
+                style={{ background: "linear-gradient(90deg,transparent,#E8B84B,transparent)" }}
+              />
+
+              {/* 그린 CTA */}
+              <button
+                onClick={close}
+                className="w-full rounded-2xl px-4 py-2.5 text-[14px] font-extrabold text-white transition-transform duration-150 ease-out hover:-translate-y-0.5 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{ backgroundColor: "#0F7A2E", boxShadow: "0 8px 20px -6px rgba(15,122,46,0.45)", outlineColor: "#0F7A2E" }}
+              >
+                오늘도 맛있게 🍽️
+              </button>
+            </div>
           </>
         ) : (
           <>
